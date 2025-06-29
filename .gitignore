@@ -1,0 +1,18 @@
+# Node
+node_modules/
+.pnpm-store/
+
+# Env
+.env
+
+# Logs
+*.log
+
+# Prisma
+/apps/backend/prisma/dev.db
+/apps/backend/src/generated/prisma
+
+
+# Build
+dist
+build

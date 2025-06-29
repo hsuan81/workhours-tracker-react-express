@@ -1,0 +1,6 @@
+{
+"name": "worker-time-tracker-app",
+"private": true,
+"version": "1.0.0",
+"workspaces": ["apps/*"]
+}
