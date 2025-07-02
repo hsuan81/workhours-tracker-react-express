@@ -4,6 +4,17 @@
 // Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
+// **Explanation:**
+//- `generator client` specifies using Prisma Client as the generator.
+//- `datasource db` configures the PostgreSQL connection.
+//- `model` defines each table schema in the database.
+//- `@id` sets the primary key.
+//- `@default(cuid())` auto-generates unique IDs.
+//- `@relation` defines relations between models.
+//- `@unique` enforces unique constraints.
+//- `@updatedAt` auto-updates timestamp on update.
+//- `enum` declares enum types used in models.
+
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
@@ -12,4 +23,188 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+// =============================================
+// ENUMS
+// =============================================
+
+enum UserRole {
+  EMPLOYEE
+  MANAGER
+  ADMINISTRATOR
+}
+
+enum LeaveType {
+  SICK
+  VACATION
+  PERSONAL
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// =============================================
+// CORE ENTITIES
+// =============================================
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid // UUID needs explicit type
+  email         String    @unique
+  passwordHash  String
+  firstName     String    @db.VarChar(100)
+  lastName      String    @db.VarChar(100)
+  role          UserRole
+  teamId        String?   @db.Uuid
+  monthlySalary Decimal?  @db.Decimal(10, 2) // Financial precision important
+  hourlyRate    Decimal?  @db.Decimal(10, 2) // Financial precision important
+  hireDate      DateTime? @db.Date // Date only, no time needed
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relationships
+  team                  Team?           @relation("TeamMembers", fields: [teamId], references: [id], onDelete: SetNull)
+  managedTeams          Team[]          @relation("TeamManager")
+  createdProjects       Project[]       @relation("ProjectCreator")
+  projectMemberships    ProjectMember[]
+  timeEntries           TimeEntry[]
+  modifiedTimeEntries   TimeEntry[]     @relation("TimeEntryModifier")
+  leaveRequests         LeaveRequest[]  @relation("LeaveRequestUser")
+  approvedLeaveRequests LeaveRequest[]  @relation("LeaveRequestApprover")
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([teamId])
+}
+
+model Team {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  managerId   String?  @db.Uuid
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relationships
+  manager User?  @relation("TeamManager", fields: [managerId], references: [id], onDelete: SetNull)
+  members User[] @relation("TeamMembers")
+}
+
+model Project {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String    @db.VarChar(200)
+  description String?
+  clientName  String?   @db.VarChar(200)
+  projectCode String?   @unique
+  startDate   DateTime? @db.Date // Date only
+  endDate     DateTime? @db.Date // Date only
+  isActive    Boolean   @default(true)
+  createdBy   String?   @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relationships
+  creator     User?           @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: SetNull)
+  members     ProjectMember[]
+  timeEntries TimeEntry[]
+}
+
+// =============================================
+// RELATIONSHIP TABLES
+// =============================================
+
+model ProjectMember {
+  id         String    @id @default(uuid()) @db.Uuid
+  projectId  String    @db.Uuid
+  userId     String    @db.Uuid
+  assignedAt DateTime  @default(now())
+  removedAt  DateTime?
+  isActive   Boolean   @default(true)
+
+  // Relationships
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+  @@index([userId, isActive])
+}
+
+// =============================================
+// TIME TRACKING
+// =============================================
+
+model TimeEntry {
+  id             String    @id @default(uuid()) @db.Uuid
+  userId         String    @db.Uuid
+  projectId      String    @db.Uuid
+  date           DateTime  @db.Date // Date only
+  startTime      DateTime? @db.Time // Time only, no date
+  endTime        DateTime? @db.Time // Time only, no date
+  hoursWorked    Decimal   @db.Decimal(4, 2) // Precision important for hours
+  description    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  lastModifiedBy String?   @db.Uuid
+
+  // Relationships
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  modifier User?   @relation("TimeEntryModifier", fields: [lastModifiedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+  @@index([projectId, date])
+  @@index([date])
+  @@index([userId])
+  @@index([projectId])
+}
+
+model OvertimeRate {
+  id             String    @id @default(uuid()) @db.Uuid
+  tierName       String
+  minHours       Decimal   @db.Decimal(4, 2) // Precision important for hours
+  maxHours       Decimal?  @db.Decimal(4, 2) // Precision important for hours
+  rateMultiplier Decimal   @db.Decimal(4, 2) // Precision important for rates
+  effectiveFrom  DateTime  @db.Date // Date only
+  effectiveTo    DateTime? @db.Date // Date only
+  isActive       Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+
+  @@index([effectiveFrom, effectiveTo])
+  @@index([isActive])
+}
+
+// =============================================
+// LEAVE MANAGEMENT
+// =============================================
+
+model LeaveRequest {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @db.Uuid
+  leaveType       LeaveType
+  startDate       DateTime    @db.Date // Date only
+  endDate         DateTime    @db.Date // Date only
+  daysCount       Decimal     @db.Decimal(4, 2) // Precision important for days
+  reason          String?
+  status          LeaveStatus @default(PENDING)
+  approvedBy      String?     @db.Uuid
+  approvedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  // Relationships
+  user     User  @relation("LeaveRequestUser", fields: [userId], references: [id], onDelete: Cascade)
+  approver User? @relation("LeaveRequestApprover", fields: [approvedBy], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([startDate, endDate])
 }
