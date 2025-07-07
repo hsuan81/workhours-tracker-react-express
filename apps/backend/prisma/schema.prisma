@@ -142,17 +142,15 @@ model ProjectMember {
 // =============================================
 
 model TimeEntry {
-  id             String    @id @default(uuid()) @db.Uuid
-  userId         String    @db.Uuid
-  projectId      String    @db.Uuid
-  date           DateTime  @db.Date // Date only
-  startTime      DateTime? @db.Time // Time only, no date
-  endTime        DateTime? @db.Time // Time only, no date
-  hoursWorked    Decimal   @db.Decimal(4, 2) // Precision important for hours
+  id             String   @id @default(uuid()) @db.Uuid
+  userId         String   @db.Uuid
+  projectId      String   @db.Uuid
+  date           DateTime @db.Date // Date only
+  hoursWorked    Decimal  @db.Decimal(4, 2) // Precision important for hours
   description    String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  lastModifiedBy String?   @db.Uuid
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  lastModifiedBy String?  @db.Uuid
 
   // Relationships
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
