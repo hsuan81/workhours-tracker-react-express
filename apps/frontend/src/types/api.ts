@@ -1,13 +1,24 @@
 // src/types/api.ts
-export type ProjectSummary = {
+export interface ProjectSummary {
   id: string
   name: string
   hours: number
 }
 
+export type Project = Omit<ProjectSummary, "hours">
+
+// API Request Types
+export interface TimeEntry {
+  id?: string
+  userId: string
+  projectId: string
+  date: string // YYYY-MM-DD
+  hours: number
+}
+
 // API Response Types
 
-export type DailySummary = {
+export interface DailySummary {
   date: string
   totalHours: number
   regularHours: number
@@ -16,7 +27,7 @@ export type DailySummary = {
   projects: ProjectSummary[]
 }
 
-export type MonthlyOverview = {
+export interface MonthlyOverview {
   year: number
   month: number
   daysWorked: number
