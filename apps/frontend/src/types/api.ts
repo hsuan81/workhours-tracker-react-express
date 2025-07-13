@@ -23,7 +23,7 @@ export interface DailySummary {
   totalHours: number
   regularHours: number
   overtimeHours: number
-  pay: number
+  overtimePay: number | null
   projects: ProjectSummary[]
 }
 
@@ -34,6 +34,5 @@ export interface MonthlyOverview {
   regularHours: number
   overtimeHours: number
   overtimePay: number
-  regularHourLimit: number
   overtimeLimit: number
 }

@@ -15,12 +15,11 @@ export function MonthlyOverviewCard() {
             regularHours: 160,
             overtimeHours: 10,
             overtimePay: 300,
-            regularHourLimit: 160,
             overtimeLimit: 20
         }
 
         setTimeout(() => setOverview(mock), 300)
-        // fetch('/api/entries/overview?month=' + month).then(res => res.json()).then(setOverview)
+        // fetch('/api/time-entries/monthly-overview?month=' + month).then(res => res.json()).then(setOverview)
     }, [])
     
     if (!overview) {
@@ -30,7 +29,7 @@ export function MonthlyOverviewCard() {
     return <div className="p-4 border rounded-xl shadow w-full max-w-full">
         <h2 className="text-lg font-semibold mb-2">Monthly Overview</h2>
         <p>Days Worked: {overview.daysWorked}</p>
-        <p>Regular Hours: {overview.regularHours}/{overview.regularHourLimit}</p>
+        <p>Regular Hours: {overview.regularHours}</p>
         <p>Overtime: {overview.overtimeHours} / {overview.overtimeLimit}</p>
         <p>Est. Overtime Pay: {overview.overtimePay}</p>
         </div>

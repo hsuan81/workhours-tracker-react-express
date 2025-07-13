@@ -11,7 +11,7 @@ export function TodaySummaryCard() {
         totalHours: 8.5,
         regularHours: 8,
         overtimeHours: 0.5,
-        pay: 250,
+        overtimePay: 250,
         projects: [
           { id: '1', name: 'Project A', hours: 5 },
           { id: '2', name: 'Project B', hours: 3.5 },
