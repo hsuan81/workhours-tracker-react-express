@@ -1,0 +1,13 @@
+// monorepo-root/tsconfig.base.json
+{
+  "compilerOptions": {
+    "baseUrl": ".", // let monorepo root be the base URL
+    "paths": {
+      "shared/*": ["shared/*"] // alias for shared code
+    },
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true
+  }
+}
