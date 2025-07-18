@@ -8,12 +8,21 @@ export interface ProjectSummary {
 export type Project = Omit<ProjectSummary, "hours">
 
 // API Request Types
+// export interface TimeEntry {
+//   id?: string
+//   userId: string
+//   projectId: string
+//   date: string // YYYY-MM-DD
+//   hours: number
+// }
+
 export interface TimeEntry {
   id?: string
-  userId: string
   projectId: string
-  date: string // YYYY-MM-DD
-  hours: number
+  projectName: string
+  date: string
+  hours: number | null
+  status: "new" | "edited" | "deleted" | "unchanged"
 }
 
 // API Response Types

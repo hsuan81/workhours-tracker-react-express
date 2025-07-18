@@ -1,107 +1,228 @@
-import { useEffect, useState, useRef } from "react";
-import { submitTimeEntry } from "../api/timeEntry";
-import type { Project, TimeEntry } from "../types/api";
-
-const userId = "user-001"; // Mock user id
-
-const projectsMock: Project[] = [{id: "A", name: "Proj A"}, {id: "B", name: "Proj B"}]
+import { useEffect, useState } from "react"
+import type { TimeEntry } from "../types/api"
+import EntryRow from "./EntryRow"
 
 export default function LogHoursForm() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [entries, setEntries] = useState<{ [projectId: string]: number }>({});
-  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10)); // yyyy-mm-dd
-  const originalEntriesRef = useRef<{[projectId: string]: number}>({});
-//   const [originalEntries, setOriginalEntries] = useState<{[projectId: string]: number}>({});
+  const today = new Date().toISOString().slice(0, 10)
+  const [date, setDate] = useState(today)
+  const [entries, setEntries] = useState<TimeEntry[]>([])
+  const [initialEntries, setInitialEntries] = useState<TimeEntry[]>([])
+  const [allProjects, setAllProjects] = useState<
+    { id: string; name: string }[]
+  >([])
 
   useEffect(() => {
-    setProjects(projectsMock);
-    // fetchProjects().then(setProjects);
-  }, []);
+    async function fetchProjects() {
+      const projects = await Promise.resolve([
+        { id: "projA", name: "Project A" },
+        { id: "projB", name: "Project B" },
+        { id: "projC", name: "Project C" },
+        { id: "projD", name: "Project D" },
+      ])
+      setAllProjects(projects)
+    }
+    fetchProjects()
+  }, [])
 
   useEffect(() => {
-    const fetchTimeEntry = async () => {
-    //   const res = await fetch(`/api/time-entry?date=${date}`);
-    //   const data: TimeEntry[] = await res.json();
+    async function fetchSavedEntries() {
+      const saved = await Promise.resolve<TimeEntry[]>([
+        {
+          id: "1",
+          projectId: "projA",
+          projectName: "Project A",
+          date,
+          hours: 3.5,
+          status: "unchanged",
+        },
+        {
+          id: "2",
+          projectId: "projB",
+          projectName: "Project B",
+          date,
+          hours: 4,
+          status: "unchanged",
+        },
+      ])
+      setEntries(saved)
+      setInitialEntries(saved)
+    }
+    fetchSavedEntries()
+  }, [date])
 
-    //   const mapped: Record<string, number> = {};
-    //   data.forEach(entry => {
-    //     mapped[entry.projectId] = entry.hours;
-    //   });
-    //   setEntries(mapped);
-    setEntries({"A": 2,
-      "B": 3
-    }); // Mock data for testing
-    // setOriginalEntries({"A": 2, "B": 3}); // Mock data for testing
-    originalEntriesRef.current = {"A": 2, "B": 3}; // Mock data for testing
-    };
+  const handleAdd = () => {
+    const selectedProjectIds = entries
+      .filter((e) => e.status !== "deleted")
+      .map((e) => e.projectId)
+    const available = allProjects.find(
+      (p) => !selectedProjectIds.includes(p.id)
+    )
+    if (available) {
+      setEntries((prev) => [
+        ...prev,
+        {
+          projectId: available.id,
+          projectName: available.name,
+          date,
+          hours: null,
+          status: "new",
+        },
+      ])
+    }
+  }
 
-    fetchTimeEntry();
-  }, [date]);
+  const handleProjectChange = (index: number, projectId: string) => {
+    const project = allProjects.find((p) => p.id === projectId)
+    if (!project) return
+    setEntries((prev) => {
+      const updated = [...prev]
+      updated[index].projectId = project.id
+      updated[index].projectName = project.name
+      updated[index].status =
+        updated[index].status === "unchanged" ? "edited" : updated[index].status
+      return updated
+    })
+  }
 
-  const handleChange = (projectId: string, value: string) => {
-    setEntries({ ...entries, [projectId]: parseFloat(value) || 0 });
-  };
+  const handleUpdate = (index: number, value: number | null) => {
+    setEntries((prev) => {
+      const updated = [...prev]
+      updated[index].hours = value
+      if (updated[index].status === "unchanged") {
+        updated[index].status = "edited"
+      }
+      return updated
+    })
+  }
 
-  const totalHours = Object.values(entries).reduce((a, b) => a + b, 0);
-  const regularHours = Math.min(totalHours, 8);
-  const overtimeHours = Math.max(totalHours - 8, 0);
-  const rate = 25;
-  const dailyPay = overtimeHours * rate * 1.33;
+  const handleDelete = (index: number) => {
+    setEntries((prev) => {
+      const updated = [...prev]
+      if (updated[index].status === "new") {
+        updated.splice(index, 1)
+      } else {
+        updated[index].status = "deleted"
+      }
+      return updated
+    })
+  }
 
-  const handleSubmit = async () => {
-    const payload: TimeEntry[] = Object.entries(entries).map(([projectId, hours]) => ({
-      userId,
-      projectId,
-      date,
-      hours,
-    }));
-    await submitTimeEntry(payload);
-    setEntries(entries)
-    originalEntriesRef.current = { ...entries }; // Update original entries
-    // setOriginalEntries(entries);
-    alert("Saved!");
-  };
+  const handleCancel = () => {
+    setEntries(initialEntries.map((e) => ({ ...e })))
+  }
+
+  const handleSave = () => {
+    const created = entries.filter((e) => e.status === "new")
+    const updated = entries.filter((e) => e.status === "edited")
+    const deleted = entries
+      .filter((e) => e.status === "deleted" && e.id)
+      .map((e) => ({ id: e.id }))
+    console.log({ created, updated, deleted })
+    // Send to backend
+  }
+
+  const selectedProjectIds = entries
+    .filter((e) => e.status !== "deleted")
+    .map((e) => e.projectId)
+  const total = entries
+    .filter((e) => e.status !== "deleted")
+    .reduce((sum, e) => sum + (e.hours ?? 0), 0)
+  const regular = Math.min(total, 8)
+  const overtime = Math.max(total - 8, 0)
+  const rate = 25
+  const otPay = overtime * rate * 1.33
+  const regularPay = regular * rate
+
+  const hasInvalidEntry = entries.some(
+    (e) =>
+      e.status !== "deleted" &&
+      (!e.projectId || e.hours === null || e.hours <= 0)
+  )
+
+  const hasAvailableProject = allProjects.some(
+    (p) => !selectedProjectIds.includes(p.id)
+  )
 
   return (
-    <div className="p-6 max-w-xl mx-auto space-y-4 bg-black shadow-md rounded">
-      <div className="flex justify-between items-center">
+    <div className="p-6 max-w-2xl mx-auto border bg-custom-white rounded shadow">
+      <h2 className="text-lg text-center text-custom-black font-semibold mb-4">
+        Log Hours for {date}
+      </h2>
+
+      <div className="flex gap-4 items-center mb-4">
+        <label>Date:</label>
         <input
           type="date"
-          className="border p-2 rounded"
           value={date}
           onChange={(e) => setDate(e.target.value)}
         />
-        <div className="space-x-2">
-          <button onClick={handleSubmit} className="bg-blue-500 text-white px-3 py-1 rounded">Save Entry</button>
-          <button onClick={() => setEntries(originalEntriesRef.current)} className="bg-gray-300 px-3 py-1 rounded">Cancel</button>
+        <button
+          onClick={handleSave}
+          className="bg-custom-blue text-custom-white px-3 py-1 rounded disabled:opacity-50"
+          disabled={hasInvalidEntry}
+        >
+          Save Entry
+        </button>
+        <button
+          onClick={handleCancel}
+          className="bg-custom-red text-custom-white px-3 py-1"
+        >
+          Cancel
+        </button>
+      </div>
+
+      <div className="mb-4">
+        <p className="font-semibold mb-1">Project Hours Entry:</p>
+        <div className="border p-3 rounded bg-gray-50">
+          {entries.map(
+            (entry, index) =>
+              entry.status !== "deleted" && (
+                <EntryRow
+                  key={entry.id ?? `temp-${index}`}
+                  entry={entry}
+                  index={index}
+                  allProjects={allProjects}
+                  selectedProjectIds={selectedProjectIds}
+                  onProjectChange={handleProjectChange}
+                  onHourChange={handleUpdate}
+                  onDelete={handleDelete}
+                />
+              )
+          )}
+          <button
+            onClick={handleAdd}
+            disabled={!hasAvailableProject}
+            className="bg-custom-blue text-custom-white mt-2 disabled:opacity-50"
+          >
+            + Add Project
+          </button>
         </div>
       </div>
 
-      <div className="bg-black">
-        <h2 className="font-semibold mb-2">Project Hours Entry</h2>
-        <div className="space-y-2">
-          {projects.map((project) => (
-            <div key={project.id} className="flex items-center gap-2">
-              <label className="w-32">{project.name}:</label>
-              <input
-                type="number"
-                className="border px-2 py-1 rounded w-24"
-                value={entries[project.id] || ""}
-                onChange={(e) => handleChange(project.id, e.target.value)}
-              />
-              <span>hours</span>
-            </div>
-          ))}
-        </div>
+      <div className="mb-2 text-custom-black">
+        <p className="font-semibold">Daily Summary:</p>
+        <ul className="list-disc ml-6">
+          <li>Total Hours: {total.toFixed(1)}</li>
+          <li>Regular Hours: {regular.toFixed(1)}</li>
+          <li>Overtime Hours: {overtime.toFixed(1)}</li>
+          <li>Overtime Pay: ${otPay.toFixed(2)} (Rate: $25 × 1.33/hr)</li>
+        </ul>
       </div>
 
-      <div className="mt-4 text-sm">
-        <h3 className="font-semibold">Daily Summary</h3>
-        <p>Total Hours: {totalHours.toFixed(1)}</p>
-        <p>Regular Hours: {regularHours.toFixed(1)}</p>
-        <p>Overtime Hours: {overtimeHours.toFixed(1)} (${rate} × 1.33/hr) = ${(overtimeHours * rate * 1.33).toFixed(2)}</p>
-        <p className="font-bold">Overtime Pay: ${dailyPay.toFixed(2)}</p>
+      <div className="mb-2 text-custom-black">
+        <p className="font-semibold">Week Summary:</p>
+        <ul className="list-disc ml-6">
+          <li>Total Hours: {total.toFixed(1)}</li>
+          <li>
+            Regular Hours: {regular.toFixed(1)} (Rate: $25/hr) = $
+            {regularPay.toFixed(0)}
+          </li>
+          <li>
+            Overtime Hours: {overtime.toFixed(1)} (Rate: $25 × 1.33/hr) = $
+            {otPay.toFixed(2)}
+          </li>
+        </ul>
       </div>
     </div>
-  );
+  )
 }
