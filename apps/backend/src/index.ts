@@ -3,6 +3,7 @@ import cors from "cors"
 import dotenv from "dotenv"
 import { PrismaClient } from "./generated/prisma/index.js"
 import timeEntryRoutes from "./routes/timeEntries"
+import userRoutes from "./routes/users"
 
 dotenv.config({ path: "../.env" }) // load environment variables from .env file
 
@@ -16,6 +17,7 @@ app.use(
 app.use(express.json())
 
 app.use("/api/time-entries", timeEntryRoutes)
+app.use("/api", userRoutes) // Import user routes
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello from backend" })

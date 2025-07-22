@@ -4,7 +4,24 @@ import { PrismaClient, Prisma } from "../src/generated/prisma/index.js"
 const prisma = new PrismaClient()
 
 async function main() {
+  console.log("Clearing existing data...")
+  await prisma.dailyOvertime.deleteMany({})
+  await prisma.timeEntry.deleteMany({})
+  await prisma.project.deleteMany({})
+  await prisma.user.deleteMany({})
+  await prisma.team.deleteMany({})
+
   console.log("🌱 Starting seed...")
+
+  // Team created
+  await prisma.team.upsert({
+    where: { id: "team1" },
+    update: {},
+    create: {
+      id: "team1",
+      name: "Development Team",
+    },
+  })
 
   // Create Users
   const user1 = await prisma.user.upsert({
@@ -18,6 +35,13 @@ async function main() {
       hourlyRate: new Prisma.Decimal(75.0),
       role: "EMPLOYEE",
       passwordHash: "hashed-password-123", // Mocked hash
+      team: {
+        connect: {
+          id: "team1", // Connect to existing team by ID
+        },
+      },
+      hireDate: new Date("2023-01-15"),
+      monthlySalary: 60000,
     },
   })
 
@@ -29,9 +53,12 @@ async function main() {
       firstName: "Sarah",
       lastName: "Smith",
       email: "sarah@example.com",
-      hourlyRate: new Prisma.Decimal(65.0),
+      hourlyRate: new Prisma.Decimal(105.0),
       role: "MANAGER",
       passwordHash: "hashed-password-456", // Mocked hash
+      teamId: "team1",
+      hireDate: new Date("2022-05-20"),
+      monthlySalary: 82000,
     },
   })
 

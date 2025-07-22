@@ -63,6 +63,7 @@ model User {
   hourlyRate    Decimal?  @db.Decimal(10, 2) // Financial precision important
   hireDate      DateTime? @db.Date // Date only, no time needed
   isActive      Boolean   @default(true)
+  mustChangePassword Boolean @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
