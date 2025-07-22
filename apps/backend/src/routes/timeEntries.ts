@@ -2,6 +2,7 @@
 import express, { Request, Response } from "express"
 import { PrismaClient, Prisma } from "../generated/prisma/index.js"
 import { TimeEntry } from "shared/types.js"
+import { syncOvertimeSummary } from "../utils/overtime"
 
 const router = express.Router()
 

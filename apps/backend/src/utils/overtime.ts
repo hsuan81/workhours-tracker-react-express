@@ -49,11 +49,11 @@ export async function syncOvertimeSummary(
 ): Promise<void> {
   const entries = await prisma.timeEntry.findMany({
     where: { userId, date },
-    select: { hoursWorked: true },
+    select: { hours: true },
   })
 
   const totalHours = entries.reduce(
-    (sum, e) => sum.plus(e.hoursWorked),
+    (sum, e) => sum.plus(e.hours),
     new PrismaDecimal(0)
   )
 
