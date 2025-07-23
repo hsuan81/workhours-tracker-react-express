@@ -199,6 +199,22 @@ async function main() {
     })
   }
 
+  await prisma.team.update({
+    where: { id: "team1" },
+    data: {
+      managerId: "user2", // Assign Sarah as the manager of the team
+    },
+  })
+
+  await prisma.projectMember.createMany({
+    data: [
+      { userId: "user1", projectId: "proj1" },
+      { userId: "user1", projectId: "proj2" },
+      { userId: "user2", projectId: "proj3" },
+      { userId: "user2", projectId: "proj1" },
+    ],
+  })
+
   console.log("✅ Seed completed!")
   console.log("📊 Created:")
   console.log("  - 2 users (user1, user2)")
