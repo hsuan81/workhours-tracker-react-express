@@ -1,4 +1,4 @@
-import type { TimeEntry } from "../types/api"
+import type { TimeEntry } from "../types"
 
 type EntryRowProps = {
   entry: TimeEntry

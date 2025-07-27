@@ -12,10 +12,33 @@ const prisma = new PrismaClient()
 
 interface TeamSummary {
   teamId: string
-  month: string
+  month: string // YYYY-MM
   totalOvertime: number
   avgDailyOvertime: number
   totalOtCost: number
+}
+
+interface TeamMemberEntryOverview {
+  userId: string
+  name: string
+  monthlyOvertime: number
+  last7WorkdaysAvgHours: number
+}
+
+interface TeamMembersEntryOverview {
+  teamId: string
+  month: string // YYYY-MM
+  last7WorkdaysRange: {
+    start: string // ISO date
+    end: string // ISO date
+  }
+  members: TeamMemberEntryOverview[]
+  //   members: {
+  //     userId: string
+  //     name: string
+  //     monthlyOvertime: number
+  //     last7WorkdaysAvgHours: number
+  //   }[]
 }
 
 export async function getTeamSummary({
@@ -49,7 +72,7 @@ export async function getTeamEntries({
   managerId: string
   teamId?: string
   month?: string
-}) {
+}): Promise<TeamMembersEntryOverview[]> {
   const targetMonth: string = month ?? getCurrentMonth()
   const teams: string[] = teamId ? [teamId] : await getManagerTeamIds(managerId)
 
@@ -82,7 +105,7 @@ export async function getTeamEntries({
     })
   )
 
-  return { summaries: result }
+  return result
 }
 
 export async function getTeams(
@@ -107,7 +130,6 @@ async function getTeamSummaryData(
   teamId: string,
   month: string
 ): Promise<TeamSummary> {
-  // TODO: implement actual summary logic
   const { start: monthStart, end: monthEnd } = getMonthRange(month)
   const memberIds = await prisma.user.findMany({
     where: { teamId, isActive: true },

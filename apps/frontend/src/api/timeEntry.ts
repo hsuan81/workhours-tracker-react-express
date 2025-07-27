@@ -1,4 +1,4 @@
-import type { TimeEntry, ProjectSummary } from "../types/api"
+import type { TimeEntry, ProjectSummary } from "../types"
 
 export async function fetchProjects(): Promise<
   Omit<ProjectSummary, "hours">[]
