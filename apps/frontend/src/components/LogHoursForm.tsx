@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react"
-import type { TimeEntry } from "../types/api"
+import type { TimeEntry } from "../types"
 import EntryRow from "./EntryRow"
 
 export default function LogHoursForm() {
