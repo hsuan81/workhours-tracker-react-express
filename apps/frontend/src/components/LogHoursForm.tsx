@@ -144,7 +144,7 @@ export default function LogHoursForm() {
   )
 
   return (
-    <div className="p-6 max-w-2xl mx-auto border bg-custom-white rounded shadow">
+    <div className="p-6 max-w-2xl mx-auto border bg-custom-white text-custom-black rounded shadow">
       <h2 className="text-lg text-center text-custom-black font-semibold mb-4">
         Log Hours for {date}
       </h2>
@@ -173,7 +173,7 @@ export default function LogHoursForm() {
 
       <div className="mb-4">
         <p className="font-semibold mb-1">Project Hours Entry:</p>
-        <div className="border p-3 rounded bg-gray-50">
+        <div className="border p-3 rounded bg-custom-white">
           {entries.map(
             (entry, index) =>
               entry.status !== "deleted" && (

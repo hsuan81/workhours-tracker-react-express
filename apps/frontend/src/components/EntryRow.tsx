@@ -27,7 +27,7 @@ export default function EntryRow({
         <select
           value={entry.projectId}
           onChange={(e) => onProjectChange(index, e.target.value)}
-          className="border px-1"
+          className="border px-1 bg-custom-white"
         >
           <option value="">Select Project</option>
           {allProjects.map((p) => (
