@@ -33,13 +33,57 @@ interface User {
   email: string
   role: UserRole
   teamId: string
-  hireDate: string
+  hireDate?: string | null
   monthlySalary: number
   isActive: boolean
   hourlyRate: number
 }
 
+interface UserName {
+  id: string
+  firstName: string
+  lastName: string
+}
+
 const prisma = new PrismaClient()
+
+export async function getAllUsersName(): Promise<UserName[]> {
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+    },
+  })
+
+  return users
+}
+
+export async function getUserById(userId: string): Promise<User | null> {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      role: true,
+      teamId: true,
+      hireDate: true,
+      monthlySalary: true,
+      isActive: true,
+      hourlyRate: true,
+    },
+  })
+  return user
+    ? {
+        ...user,
+        hireDate: user.hireDate ? toISODate(user.hireDate) : null,
+        monthlySalary: user.monthlySalary.toNumber(),
+        hourlyRate: user.hourlyRate.toNumber(),
+      }
+    : null
+}
 
 export async function registerUser(data: RegisterUserInput): Promise<User> {
   const {

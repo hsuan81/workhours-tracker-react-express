@@ -18,7 +18,7 @@ app.use(
 app.use(express.json())
 
 app.use("/api/time-entries", timeEntryRoutes)
-app.use("/api", userRoutes) // Import user routes
+app.use("/api/users", userRoutes) // Import user routes
 app.use("/api/manager", managerRoutes) // Import manager routes
 
 app.get("/", (req: Request, res: Response) => {

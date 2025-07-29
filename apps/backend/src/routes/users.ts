@@ -1,6 +1,11 @@
 // apps/backend/routes/users.ts
 import express, { Request, Response } from "express"
-import { registerUser, updateUser } from "../services/userService"
+import {
+  registerUser,
+  updateUser,
+  getAllUsersName,
+  getUserById,
+} from "../services/userService"
 import { registerUserSchema } from "../schemas/userSchemas"
 // import { requireRole, secureRoute } from "../middleware/authMiddleware"
 
@@ -10,7 +15,7 @@ const router = express.Router()
 router.post(
   "/register",
   //   requireRole(["admin"]),
-  async (req: Request, res: Response) => {
+  async (req: Request, res: Response): Promise<void> => {
     try {
       const data = registerUserSchema.parse(req.body)
       const user = await registerUser(data)
@@ -22,8 +27,33 @@ router.post(
   }
 )
 
+router.get("/", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const users = await getAllUsersName()
+    res.status(200).json(users)
+  } catch (err) {
+    console.error("Error fetching users:", err)
+    res.status(500).json({ error: "Failed to fetch users" })
+  }
+})
+
+router.get("/:id", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const userId = req.params.id
+    const user = await getUserById(userId)
+    if (!user) {
+      res.status(404).json({ error: "User not found" })
+      return
+    }
+    res.status(200).json(user)
+  } catch (err) {
+    console.error("Error fetching user:", err)
+    res.status(500).json({ error: "Failed to fetch user" })
+  }
+})
+
 // PATCH /users/:id (Admin only)
-router.patch("/users/:id", async (req: Request, res: Response) => {
+router.patch("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id
     const updatedUser = await updateUser(userId, req.body)
