@@ -1,90 +1,92 @@
-// src/api/manager.ts
-// Manager Dashboard Types
+// apps/frontend/src/api/manager.ts
 import { apiGet } from "../utils/api"
 
-export interface TeamMemberEntryOverview {
-  userId: string
-  name: string
-  monthlyOvertime: number
-  last7WorkdaysAvgHours: number
-}
-
-interface TeamMembersOverviewApi {
-  teamId: string
-  month: string // YYYY-MM
-  last7WorkdaysRange: {
-    start: string // ISO date
-    end: string // ISO date
-  }
-  members: TeamMemberEntryOverview[]
-}
-
-export interface TeamSummary {
-  totalOvertime: number
-  avgDailyOvertime: number
-  totalOvertimeCost: number
-}
-
-interface TeamSummaryApi extends TeamSummary {
-  teamId: string
-  month: string // YYYY-MM
-  //   totalOvertime: number
-  //   avgDailyOvertime: number
-  //   totalOvertimeCost: number
-}
-
-export interface TeamOverview {
+export interface Team {
   id: string
   name: string
+}
+
+export interface TeamOverview extends Team {
   summary?: TeamSummary
-  members: TeamMemberEntryOverview[]
+  members: OvertimeMemberEntry[]
 }
 
-interface TeamApi {
-  id: string
-  name: string
-}
-
-// API functions that return clean frontend types
-export async function getTeams(managerId?: string): Promise<TeamOverview[]> {
-  if (!managerId) {
-    throw new Error("Manager ID is required to fetch teams")
-  }
-  const apiTeam = await apiGet<TeamApi[]>(
-    `/manager/teams?managerId=${managerId}`
-  )
-  return apiTeam.map((team: TeamApi) => ({
-    id: team.id,
-    name: team.name,
+export async function fetchTeams(
+  userId: string,
+  teamId?: string
+): Promise<TeamOverview[]> {
+  const params = new URLSearchParams({ userId })
+  if (teamId) params.append("teamId", teamId)
+  const teams = await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
+  return teams.map((team) => ({
+    ...team,
     summary: undefined, // Will be filled later
     members: [],
   }))
 }
 
-export async function getTeamSummary(
-  activeTeamId: string,
-  month: string
-): Promise<TeamSummary> {
-  const teamSummaryApi = await apiGet<TeamSummaryApi[]>(
-    `/manager/team-summary?managerId=user2&teamId=${activeTeamId}&month=${month}`
-  )
-
-  return {
-    totalOvertime: teamSummaryApi[0].totalOvertime,
-    avgDailyOvertime: teamSummaryApi[0].avgDailyOvertime,
-    totalOvertimeCost: teamSummaryApi[0].totalOvertimeCost,
-  }
+export interface TeamMember {
+  id: string
+  firstName: string
+  lastName: string
 }
 
-export async function getTeamEntries(
-  activeTeamId: string,
-  month: string
-): Promise<TeamMemberEntryOverview[]> {
-  const teamEntriesApi = await apiGet<TeamMembersOverviewApi[]>(
-    `/manager/team-entries?managerId=user2&teamId=${activeTeamId}&month=${month}`
+export async function fetchTeamMembers(userId: string, teamId?: string) {
+  const params = new URLSearchParams({ userId })
+  if (teamId) params.append("teamId", teamId)
+  return await apiGet<TeamMember[]>(
+    `/manager/team-members?${params.toString()}`
   )
+}
 
-  console.log("Team Entries API Response:", teamEntriesApi)
+export interface TeamSummary {
+  teamId: string
+  month: string // YYYY-MM
+  totalOvertime: number
+  avgDailyOvertime: number
+  totalOtCost: number
+}
 
-  return teamEntriesApi[0]?.members
+export async function fetchTeamSummaries(
+  managerId: string,
+  month?: string,
+  teamId?: string
+): Promise<TeamSummary[]> {
+  const params = new URLSearchParams({ managerId })
+  if (month) params.append("month", month)
+  if (teamId) params.append("teamId", teamId)
+  return await apiGet<TeamSummary[]>(
+    `/manager/team-summary?${params.toString()}`
+  )
+}
+
+export interface OvertimeRange {
+  start: string // ISO date
+  end: string
+}
+
+export interface OvertimeMemberEntry {
+  userId: string
+  firstName: string
+  lastName: string
+  monthlyOvertime: number
+  last7WorkdaysAvgHours: number
+}
+
+export interface TeamEntry {
+  teamId: string
+  month: string
+  last7WorkdaysRange: OvertimeRange
+  members: OvertimeMemberEntry[]
+}
+
+export async function fetchTeamEntries(
+  managerId: string,
+  month?: string,
+  teamId?: string
+): Promise<TeamEntry[]> {
+  const params = new URLSearchParams({ managerId })
+  if (month) params.append("month", month)
+  if (teamId) params.append("teamId", teamId)
+  return await apiGet<TeamEntry[]>(`/manager/team-entries?${params.toString()}`)
 }

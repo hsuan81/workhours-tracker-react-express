@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react"
-import type {
-  TeamOverview,
-  TeamSummary,
-  TeamMemberEntryOverview,
+import type { TeamOverview, TeamSummary, TeamEntry } from "../api/manager"
+import {
+  fetchTeams,
+  fetchTeamSummaries,
+  fetchTeamEntries,
 } from "../api/manager"
-import { getTeams, getTeamSummary, getTeamEntries } from "../api/manager"
 import { TeamTab } from "../components/TeamTab"
 import { TeamPanel } from "../components/TeamPanel"
 
@@ -101,112 +101,50 @@ import { TeamPanel } from "../components/TeamPanel"
 export default function ManagerDashboard() {
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [activeTeamId, setActiveTeamId] = useState("")
+  const userId = "user2"
 
   //   const baseUrl = import.meta.env.VITE_API_URL
 
   useEffect(() => {
-    const fetchTeams = async () => {
-      //   const res = await apiGet<TeamItem[]>("/manager/teams?managerId=user2")
-      //   //   const data = await res.json()
-
-      //   console.log("Fetched teams:", res)
-
-      //   const processed = res.map((d: { id: string; name: string }) => ({
-      //     id: d.id,
-      //     name: d.name,
-      //     summary: undefined, // Will be filled later
-      //     members: [],
-      //   }))
-      const res = await getTeams("user2")
+    const getTeams = async () => {
+      const res = await fetchTeams(userId)
       setTeams(res)
       setActiveTeamId(res[0]?.id ?? null)
     }
-    fetchTeams()
+    getTeams()
   }, [])
 
   console.log("Teams state:", teams)
 
   useEffect(() => {
-    const fetchTeamData = async () => {
+    const getTeamData = async () => {
       if (!activeTeamId) return
 
       const month = "2025-07" // or dynamically calculate
 
-      const [summaryRes, entriesRes]: [TeamSummary, TeamMemberEntryOverview[]] =
+      const [summaryRes, entriesRes]: [TeamSummary[], TeamEntry[]] =
         await Promise.all([
-          getTeamSummary(activeTeamId, month),
-          getTeamEntries(activeTeamId, month),
-          // fetch(
-          //   `${baseUrl}/api/manager/team-summary?managerId=user2&teamId=${activeTeamId}&month=${month}`
-          // ),
-          // fetch(
-          //   `${baseUrl}/api/manager/team-entries?managerId=user2&teamId=${activeTeamId}&month=${month}`
-          // ),
+          fetchTeamSummaries(userId, month, activeTeamId),
+          fetchTeamEntries(userId, month, activeTeamId),
         ])
 
-      //   const summary = await summaryRes.json()
-      //   const entries = await entriesRes.json()
       console.log("Fetched summary:", summaryRes)
       console.log("Fetched entries:", entriesRes)
 
-      const teamsToUpdate = teams
-      teamsToUpdate.forEach((team) => {
+      const teamsToUpdate = teams.map((team) => {
         if (team.id === activeTeamId) {
-          team.summary = summaryRes
-          team.members = entriesRes
+          return {
+            ...team,
+            summary: summaryRes[0],
+            members: entriesRes[0]?.members || [],
+          }
         }
+        return team
       })
       setTeams(teamsToUpdate)
-
-      //   const summaryMap = new Map<string, TeamSummary>()
-      //   summary.forEach(
-      //     (s: {
-      //       teamId: string
-      //       month: string // YYYY-MM
-      //       totalOvertime: number
-      //       avgDailyOvertime: number
-      //       totalOtCost: number
-      //     }) => {
-      //       summaryMap.set(s.teamId, {
-      //         totalOvertime: s.totalOvertime,
-      //         avgDailyOvertime: s.avgDailyOvertime,
-      //         totalOvertimeCost: s.totalOtCost,
-      //       })
-      //     }
-      //   )
-
-      //   const entriesMap = new Map<string, TeamMemberEntryOverview[]>()
-      //   entries.forEach(
-      //     (e: {
-      //       teamId: string
-      //       month: string // YYYY-MM
-      //       last7WorkdaysRange: {
-      //         start: string // ISO date
-      //         end: string // ISO date
-      //       }
-      //       members: {
-      //         userId: string
-      //         name: string
-      //         monthlyOvertime: number
-      //         last7WorkdaysAvgHours: number
-      //       }[]
-      //     }) => {
-      //       entriesMap.set(e.teamId, e.members)
-      //     }
-      //   )
-
-      //   for (const team of teamsToUpdate) {
-      //     if (summaryMap.has(team.id)) {
-      //       team.summary = summaryMap.get(team.id)!
-      //     }
-      //     if (entriesMap.has(team.id)) {
-      //       team.members = entriesMap.get(team.id)!
-      //     }
-      //   }
-      //   setTeams(teamsToUpdate)
     }
 
-    fetchTeamData()
+    getTeamData()
   }, [activeTeamId])
 
   const activeTeam = teams.find((t) => t.id === activeTeamId)!

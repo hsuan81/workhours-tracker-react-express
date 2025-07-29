@@ -20,7 +20,7 @@ export function TeamPanel({ team }: TeamPanelProps) {
   }
   console.log("Rendering TeamPanel for team:", team)
   const chartData = team.members.map((m) => ({
-    name: m.name,
+    name: `${m.firstName} ${m.lastName}`,
     monthlyOvertime: m.monthlyOvertime,
     last7WorkdaysAvgHours: m.last7WorkdaysAvgHours,
   }))
@@ -28,10 +28,10 @@ export function TeamPanel({ team }: TeamPanelProps) {
   return (
     <div className="space-y-4">
       <div className="bg-custom-white border rounded p-4">
-        <h2 className="text-lg font-semibold mb-2">Department: {team.name}</h2>
+        <h2 className="text-lg font-semibold mb-2">Team: {team.name}</h2>
         <p>Total Overtime: {team.summary?.totalOvertime} hrs</p>
         <p>Avg Daily Overtime: {team.summary?.avgDailyOvertime} hrs</p>
-        <p>Total OT Cost: ${team.summary?.totalOvertimeCost}</p>
+        <p>Total OT Cost: ${team.summary?.totalOtCost}</p>
       </div>
 
       <div className="bg-custom-white border rounded p-4">
@@ -47,7 +47,9 @@ export function TeamPanel({ team }: TeamPanelProps) {
           <tbody>
             {team.members.map((member, idx) => (
               <tr key={idx} className="border-t">
-                <td className="p-2">{member.name}</td>
+                <td className="p-2">
+                  {member.firstName + " " + member.lastName}
+                </td>
                 <td className="p-2">{member.monthlyOvertime} hrs</td>
                 <td className="p-2">{member.last7WorkdaysAvgHours} hrs</td>
               </tr>
