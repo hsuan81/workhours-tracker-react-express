@@ -105,7 +105,7 @@ router.post("/", async (req: Request, res: Response) => {
   if (results.error) {
     res.status(400).json({ error: results.error })
   }
-  res.json({
+  res.status(200).json({
     updated: results.updated,
     created: results.created,
   })
@@ -216,8 +216,8 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
     month,
     daysWorked,
     regularHours: regularHoursNumber,
-    overtimeHours: _sum.overtimeHours ?? 0,
-    overtimePay: _sum.overtimePay ?? 0,
+    overtimeHours: _sum.overtimeHours?.toNumber() ?? 0,
+    overtimePay: _sum.overtimePay?.toNumber() ?? 0,
     overtimeLimit: OVERTIME_LIMIT,
   })
 })

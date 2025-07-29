@@ -58,7 +58,7 @@ model User {
   firstName     String    @db.VarChar(100)
   lastName      String    @db.VarChar(100)
   role          UserRole
-  teamId        String?   
+  teamId        String   
   monthlySalary Decimal?  @db.Decimal(10, 2) // Financial precision important
   hourlyRate    Decimal?  @db.Decimal(10, 2) // Financial precision important
   hireDate      DateTime? @db.Date // Date only, no time needed

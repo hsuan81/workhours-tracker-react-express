@@ -4,6 +4,7 @@ import {
   getTeamSummary,
   getTeamEntries,
   getTeams,
+  getTeamMembers,
 } from "../services/managerService"
 
 const router = express.Router()
@@ -53,10 +54,11 @@ router.get("/team-entries", async (req: Request, res: Response) => {
   }
 })
 
-// Get all departments under a manager
+// Get all teams under a manager
 // Example: GET /manager/departments
 // Returns: [{ id: string, name: string, managerId: string }, ...]
-// router.get("/teams", async (req: Request, res: Response, next) => {
+// Note: managerId is assumed to be available in req.user.id or passed as a query parameter for testing
+// Note: If the user is a super admin, return all teams
 router.get("/teams", async (req: Request, res: Response) => {
   try {
     // const managerId = req.user.id
@@ -65,6 +67,25 @@ router.get("/teams", async (req: Request, res: Response) => {
     res.json(result)
   } catch (err) {
     res.status(500).json({ error: "Failed to get teams", details: err })
+    // next(err)
+  }
+})
+
+// Get team members under a manager
+// Example: GET /manager/team-members?teamId=123
+// Returns: [{id: string, firstName: string, lastName: string},...]
+router.get("/team-members", async (req: Request, res: Response) => {
+  try {
+    // const managerId = req.user.id
+    const managerId = req.query.managerId as string // Assuming managerId is passed as a query parameter
+    const { teamId } = req.query
+    const result = await getTeamMembers({
+      managerId,
+      teamId: teamId as string | undefined,
+    })
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get team members", details: err })
     // next(err)
   }
 })

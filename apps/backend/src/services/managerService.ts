@@ -20,7 +20,8 @@ interface TeamSummary {
 
 interface TeamMemberEntryOverview {
   userId: string
-  name: string
+  firstName: string
+  lastName: string
   monthlyOvertime: number
   last7WorkdaysAvgHours: number
 }
@@ -33,12 +34,6 @@ interface TeamMembersEntryOverview {
     end: string // ISO date
   }
   members: TeamMemberEntryOverview[]
-  //   members: {
-  //     userId: string
-  //     name: string
-  //     monthlyOvertime: number
-  //     last7WorkdaysAvgHours: number
-  //   }[]
 }
 
 export async function getTeamSummary({
@@ -114,6 +109,25 @@ export async function getTeams(
   return await prisma.team.findMany({
     where: { managerId },
     select: { id: true, name: true },
+  })
+}
+
+export async function getTeamMembers({
+  managerId,
+  teamId,
+}: {
+  managerId: string
+  teamId?: string
+}): Promise<{ id: string; firstName: string; lastName: string }[]> {
+  const teams = teamId ? [teamId] : await getManagerTeamIds(managerId)
+
+  if (!teams.length) {
+    throw new Error("No team(s) found")
+  }
+
+  return await prisma.user.findMany({
+    where: { teamId: { in: teams }, isActive: true },
+    select: { id: true, firstName: true, lastName: true },
   })
 }
 
@@ -195,7 +209,7 @@ async function getTeamMembersWithEntries(
     dayRangeStart: Date
     dayRangeEnd: Date
   }
-) {
+): Promise<TeamMemberEntryOverview[]> {
   const members = await prisma.user.findMany({
     where: { teamId, isActive: true },
     select: {
@@ -274,7 +288,8 @@ async function getTeamMembersWithEntries(
 
   return Array.from(result.entries()).map(([userId, user]) => ({
     userId,
-    name: `${user.firstName} ${user.lastName}`,
+    firstName: user.firstName,
+    lastName: user.lastName,
     monthlyOvertime: user.monthlyOvertime.toNumber(),
     last7WorkdaysAvgHours: user.last7WorkdaysAvgHours.toNumber(),
   }))
