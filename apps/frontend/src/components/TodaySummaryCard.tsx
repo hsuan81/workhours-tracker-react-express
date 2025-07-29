@@ -1,27 +1,12 @@
-// src/components/TodaySummaryCard.tsx
+// apps/frontend/src/components/TodaySummaryCard.tsx
 import { useEffect, useState } from "react"
-import type { DailySummary } from "../types"
+import { type DailySummary, fetchTodaySummary } from "../api/timeEntry"
 
 export function TodaySummaryCard() {
   const [summary, setSummary] = useState<DailySummary | null>(null)
 
   useEffect(() => {
-    const mock: DailySummary = {
-      date: "2025-07-07",
-      totalHours: 8.5,
-      regularHours: 8,
-      overtimeHours: 0.5,
-      overtimePay: 250,
-      projects: [
-        { id: "1", name: "Project A", hours: 5 },
-        { id: "2", name: "Project B", hours: 3.5 },
-      ],
-    }
-
-    setTimeout(() => setSummary(mock), 300)
-    // fetch('/api/entries/summary')
-    //   .then(res => res.json())
-    //   .then(setSummary)
+    fetchTodaySummary("user1", "2025-07-28").then(setSummary)
   }, [])
 
   if (!summary) return <div>Loading today's summary...</div>
@@ -40,7 +25,6 @@ export function TodaySummaryCard() {
           })
           .join(", ")}
       </p>
-      <p>Status: 🟡</p>
     </div>
   )
 }
