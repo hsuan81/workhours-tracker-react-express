@@ -5,6 +5,7 @@ import { PrismaClient } from "./generated/prisma/index.js"
 import timeEntryRoutes from "./routes/timeEntries"
 import userRoutes from "./routes/users"
 import managerRoutes from "./routes/manager" // Import manager routes
+import projectRoutes from "./routes/projects" // Import project routes
 
 dotenv.config({ path: "../.env" }) // load environment variables from .env file
 
@@ -20,6 +21,7 @@ app.use(express.json())
 app.use("/api/time-entries", timeEntryRoutes)
 app.use("/api/users", userRoutes) // Import user routes
 app.use("/api/manager", managerRoutes) // Import manager routes
+app.use("/api/projects", projectRoutes) // Import project routes
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "Hello from backend" })
