@@ -47,6 +47,38 @@ interface UserName {
 
 const prisma = new PrismaClient()
 
+async function updateTeamManagerAssignment(
+  tx: any, // Prisma transaction client
+  userId: string,
+  teamId: string | null,
+  newRole: UserRole, // Using the enum type
+  previousRole?: UserRole,
+  previousTeamId?: string | null
+) {
+  // If becoming a manager, assign to team
+  if (newRole === UserRole.MANAGER && teamId) {
+    await tx.team.update({
+      where: { id: teamId },
+      data: { managerId: userId },
+    })
+    if (previousTeamId && teamId !== previousTeamId) {
+      // If changing teams, remove from previous team
+      await tx.team.updateMany({
+        where: { managerId: userId, id: { not: teamId } },
+        data: { managerId: null },
+      })
+    }
+  }
+
+  // If was a manager but no longer, remove from any team they managed
+  if (previousRole === UserRole.MANAGER && newRole !== UserRole.MANAGER) {
+    await tx.team.updateMany({
+      where: { managerId: userId },
+      data: { managerId: null },
+    })
+  }
+}
+
 export async function getAllUsersName(): Promise<UserName[]> {
   const users = await prisma.user.findMany({
     select: {
@@ -101,8 +133,35 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
   const rawPassword = generatePassword()
   const passwordHash = await hash(rawPassword)
 
-  const newUser = await prisma.user
-    .create({
+  // const newUser = await prisma.user
+  //   .create({
+  //     data: {
+  //       firstName,
+  //       lastName,
+  //       email,
+  //       role,
+  //       teamId,
+  //       hireDate: new Date(hireDate),
+  //       monthlySalary,
+  //       hourlyRate,
+  //       passwordHash: passwordHash,
+  //       mustChangePassword: true,
+  //     },
+  //   })
+  //   .then((user) => ({
+  //     id: user.id,
+  //     firstName: user.firstName,
+  //     lastName: user.lastName,
+  //     email: user.email,
+  //     role: user.role,
+  //     teamId: user.teamId!,
+  //     hireDate: toISODate(user.hireDate!),
+  //     monthlySalary: user.monthlySalary!.toNumber(),
+  //     isActive: user.isActive,
+  //     hourlyRate: user.hourlyRate!.toNumber(),
+  //   }))
+  const result = await prisma.$transaction(async (tx) => {
+    const createdUser = await tx.user.create({
       data: {
         firstName,
         lastName,
@@ -116,22 +175,26 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
         mustChangePassword: true,
       },
     })
-    .then((user) => ({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role,
-      teamId: user.teamId!,
-      hireDate: toISODate(user.hireDate!),
-      monthlySalary: user.monthlySalary!.toNumber(),
-      isActive: user.isActive,
-      hourlyRate: user.hourlyRate!.toNumber(),
-    }))
+
+    await updateTeamManagerAssignment(tx, createdUser.id, teamId, role)
+
+    return createdUser
+  })
 
   //   await sendWelcomeEmail(email, rawPassword)
 
-  return newUser
+  return {
+    id: result.id,
+    firstName: result.firstName,
+    lastName: result.lastName,
+    email: result.email,
+    role: result.role,
+    teamId: result.teamId!,
+    hireDate: toISODate(result.hireDate!),
+    monthlySalary: result.monthlySalary.toNumber(),
+    isActive: result.isActive,
+    hourlyRate: result.hourlyRate.toNumber(),
+  }
 }
 
 export async function updateUser(
@@ -140,6 +203,10 @@ export async function updateUser(
 ): Promise<Partial<User>> {
   // const data: Partial<UpdateUserInput> = { ...updates }
   const data: Record<string, any> = { ...updates }
+  const previousUser = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, teamId: true },
+  })
   if (updates.firstName !== undefined) {
     data.firstName = updates.firstName
   }
@@ -163,22 +230,50 @@ export async function updateUser(
     data.hireDate = new Date(updates.hireDate)
   }
 
-  const updated = await prisma.user
-    .update({
-      where: { id: userId },
-      data,
-    })
-    .then((user) => ({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      teamId: user.teamId!,
-      hireDate: toISODate(user.hireDate!),
-      monthlySalary: user.monthlySalary!.toNumber(),
-      hourlyRate: user.hourlyRate!.toNumber(),
-      isActive: user.isActive,
-    }))
+  // const updated = await prisma.user
+  //   .update({
+  //     where: { id: userId },
+  //     data,
+  //   })
+  //   .then((user) => ({
+  //     id: user.id,
+  //     firstName: user.firstName,
+  //     lastName: user.lastName,
+  //     role: user.role,
+  //     teamId: user.teamId!,
+  //     hireDate: toISODate(user.hireDate!),
+  //     monthlySalary: user.monthlySalary!.toNumber(),
+  //     hourlyRate: user.hourlyRate!.toNumber(),
+  //     isActive: user.isActive,
+  //   }))
 
-  return updated
+  // return updated
+  const updatedUser = await prisma.$transaction(async (tx) => {
+    const updatedUser = await tx.user.update({
+      where: { id: userId },
+      data: data,
+    })
+
+    await updateTeamManagerAssignment(
+      tx,
+      userId,
+      data.teamId,
+      data.role,
+      previousUser?.role,
+      previousUser?.teamId
+    )
+
+    return updatedUser
+  })
+  return {
+    id: updatedUser.id,
+    firstName: updatedUser.firstName,
+    lastName: updatedUser.lastName,
+    role: updatedUser.role,
+    teamId: updatedUser.teamId!,
+    hireDate: toISODate(updatedUser.hireDate!),
+    monthlySalary: updatedUser.monthlySalary!.toNumber(),
+    hourlyRate: updatedUser.hourlyRate!.toNumber(),
+    isActive: updatedUser.isActive,
+  }
 }

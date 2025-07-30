@@ -52,8 +52,8 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 })
 
-// PATCH /users/:id (Admin only)
-router.patch("/:id", async (req: Request, res: Response): Promise<void> => {
+// PUT /users/:id (Admin only)
+router.put("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id
     const updatedUser = await updateUser(userId, req.body)
