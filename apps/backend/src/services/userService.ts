@@ -2,7 +2,7 @@
 import { PrismaClient, UserRole } from "../generated/prisma/index.js"
 import { toISODate } from "../utils/calendarUtils.js"
 import { hash, generatePassword } from "../utils/passwordUtils"
-// import { sendWelcomeEmail } from "../utils/emailUtils.ts"
+import { sendWelcomeEmail } from "../utils/emailUtils"
 
 interface RegisterUserInput {
   id: string
@@ -133,36 +133,10 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
   const rawPassword = generatePassword()
   const passwordHash = await hash(rawPassword)
 
-  // const newUser = await prisma.user
-  //   .create({
-  //     data: {
-  //       firstName,
-  //       lastName,
-  //       email,
-  //       role,
-  //       teamId,
-  //       hireDate: new Date(hireDate),
-  //       monthlySalary,
-  //       hourlyRate,
-  //       passwordHash: passwordHash,
-  //       mustChangePassword: true,
-  //     },
-  //   })
-  //   .then((user) => ({
-  //     id: user.id,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //     email: user.email,
-  //     role: user.role,
-  //     teamId: user.teamId!,
-  //     hireDate: toISODate(user.hireDate!),
-  //     monthlySalary: user.monthlySalary!.toNumber(),
-  //     isActive: user.isActive,
-  //     hourlyRate: user.hourlyRate!.toNumber(),
-  //   }))
   const result = await prisma.$transaction(async (tx) => {
     const createdUser = await tx.user.create({
       data: {
+        id,
         firstName,
         lastName,
         email,
@@ -181,7 +155,7 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
     return createdUser
   })
 
-  //   await sendWelcomeEmail(email, rawPassword)
+  await sendWelcomeEmail(email, rawPassword)
 
   return {
     id: result.id,
@@ -229,23 +203,6 @@ export async function updateUser(
   if (updates.hireDate) {
     data.hireDate = new Date(updates.hireDate)
   }
-
-  // const updated = await prisma.user
-  //   .update({
-  //     where: { id: userId },
-  //     data,
-  //   })
-  //   .then((user) => ({
-  //     id: user.id,
-  //     firstName: user.firstName,
-  //     lastName: user.lastName,
-  //     role: user.role,
-  //     teamId: user.teamId!,
-  //     hireDate: toISODate(user.hireDate!),
-  //     monthlySalary: user.monthlySalary!.toNumber(),
-  //     hourlyRate: user.hourlyRate!.toNumber(),
-  //     isActive: user.isActive,
-  //   }))
 
   // return updated
   const updatedUser = await prisma.$transaction(async (tx) => {

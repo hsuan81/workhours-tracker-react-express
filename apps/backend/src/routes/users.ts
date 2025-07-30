@@ -17,6 +17,7 @@ router.post(
   //   requireRole(["admin"]),
   async (req: Request, res: Response): Promise<void> => {
     try {
+      console.log("Registering user with data:", req.body)
       const data = registerUserSchema.parse(req.body)
       const user = await registerUser(data)
       res.status(201).json(user)
