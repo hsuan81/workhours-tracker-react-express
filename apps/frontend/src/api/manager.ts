@@ -11,7 +11,16 @@ export interface TeamOverview extends Team {
   members: OvertimeMemberEntry[]
 }
 
-export async function fetchTeams(
+export async function fetchTeams(userId: string): Promise<Team[]> {
+  const params = new URLSearchParams({ userId })
+  return await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
+}
+
+export async function fetchAllTeams(): Promise<Team[]> {
+  return await apiGet<Team[]>("/manager/teams")
+}
+
+export async function fetchTeamOverviews(
   userId: string,
   teamId?: string
 ): Promise<TeamOverview[]> {

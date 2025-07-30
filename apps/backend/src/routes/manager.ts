@@ -55,14 +55,14 @@ router.get("/team-entries", async (req: Request, res: Response) => {
 })
 
 // Get all teams under a manager
-// Example: GET /manager/departments
+// Example: GET /manager/teams
 // Returns: [{ id: string, name: string, managerId: string }, ...]
 // Note: managerId is assumed to be available in req.user.id or passed as a query parameter for testing
 // Note: If the user is a super admin, return all teams
 router.get("/teams", async (req: Request, res: Response) => {
   try {
     // const managerId = req.user.id
-    const managerId = req.query.managerId as string // Assuming managerId is passed as a query parameter
+    const managerId = req.query.managerId as string | undefined // Assuming managerId is passed as a query parameter
     const result = await getTeams(managerId)
     res.json(result)
   } catch (err) {

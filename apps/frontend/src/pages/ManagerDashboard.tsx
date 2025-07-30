@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import type { TeamOverview, TeamSummary, TeamEntry } from "../api/manager"
 import {
-  fetchTeams,
+  fetchTeamOverviews,
   fetchTeamSummaries,
   fetchTeamEntries,
 } from "../api/manager"
@@ -107,7 +107,7 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     const getTeams = async () => {
-      const res = await fetchTeams(userId)
+      const res = await fetchTeamOverviews(userId)
       setTeams(res)
       setActiveTeamId(res[0]?.id ?? null)
     }

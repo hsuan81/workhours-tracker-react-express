@@ -104,12 +104,16 @@ export async function getTeamEntries({
 }
 
 export async function getTeams(
-  managerId: string
+  managerId?: string
 ): Promise<{ id: string; name: string }[]> {
-  return await prisma.team.findMany({
-    where: { managerId },
-    select: { id: true, name: true },
-  })
+  return managerId
+    ? await prisma.team.findMany({
+        where: { managerId },
+        select: { id: true, name: true },
+      })
+    : await prisma.team.findMany({
+        select: { id: true, name: true },
+      })
 }
 
 export async function getTeamMembers({
