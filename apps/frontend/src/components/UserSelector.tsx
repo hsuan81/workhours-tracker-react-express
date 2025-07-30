@@ -1,12 +1,9 @@
+// apps/frontend/src/components/UserSelector.tsx
 import React, { type JSX } from "react"
-
-export interface UserOption {
-  userId: string
-  name: string
-}
+import type { UserName } from "../api/users"
 
 interface Props {
-  users: UserOption[]
+  users: UserName[]
   selectedId: string
   onSelect: (userId: string) => void
 }
@@ -28,8 +25,8 @@ export function UserSelector({
     >
       <option value="">-- Select a user --</option>
       {users.map((u) => (
-        <option key={u.userId} value={u.userId}>
-          {u.name}
+        <option key={u.id} value={u.id}>
+          {u.id} {u.firstName} {u.lastName}
         </option>
       ))}
     </select>

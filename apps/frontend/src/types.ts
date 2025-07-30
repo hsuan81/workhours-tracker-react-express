@@ -1,4 +1,5 @@
 // src/types/api.ts
+import type { UpdateUserInput } from "./api/users"
 export interface ProjectSummary {
   id: string
   name: string
@@ -36,16 +37,6 @@ export interface DailySummary {
   projects: ProjectSummary[]
 }
 
-export interface MonthlyOverview {
-  year: number
-  month: number
-  daysWorked: number
-  regularHours: number
-  overtimeHours: number
-  overtimePay: number
-  overtimeLimit: number
-}
-
 export interface UserOverview {
   id: string
   name: string
@@ -61,24 +52,6 @@ export interface UserOverview {
 export const USER_ROLES = ["EMPLOYEE", "ADMINISTRATOR", "MANAGER"] as const
 export type UserRole = (typeof USER_ROLES)[number]
 
-export interface RegisterUserPayload {
-  userId: string
-  firstName: string
-  lastName: string
-  email: string
-  role: UserRole
-  teamId: string
-  hireDate: string
-  monthlySalary: number
-}
-
-export interface UpdateUserPayload {
-  userId: string
-  firstName: string // Add this
-  lastName: string
-  role: UserRole
-  teamId: string
-  hireDate: string
-  monthlySalary: number
-  isActive: boolean
+export interface UpdateUserInputWithId extends UpdateUserInput {
+  id: string
 }

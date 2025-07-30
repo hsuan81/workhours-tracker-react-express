@@ -1,155 +1,72 @@
-// import React, { useEffect, useState, type JSX } from "react"
-// import { UserForm } from "../components/UserForm"
-// import { UserSelector, type UserOption } from "../components/UserSelector"
-// import type { RegisterUserPayload, UpdateUserPayload } from "../types"
-
-// const mockTeams = [
-//   { id: "team1", name: "Engineering" },
-//   { id: "team2", name: "Sales" },
-// ]
-
-// const mockUsers: UserOption[] = [
-//   { userId: "user123", name: "Alice Johnson" },
-//   { userId: "user456", name: "Bob Lee" },
-// ]
-
-// async function fetchUserData(userId: string): Promise<UpdateUserPayload> {
-//   // Replace this with a real API call
-//   return {
-//     userId,
-//     firstName: "John",
-//     lastName: "Doe",
-//     role: "EMPLOYEE",
-//     teamId: "team1",
-//     hireDate: "2024-01-01",
-//     monthlySalary: 5000,
-//     isActive: true,
-//   }
-// }
-
-// export default function AdminDashboard(): JSX.Element {
-//   const [activeTab, setActiveTab] = useState<"register" | "update">("register")
-//   const [selectedUserId, setSelectedUserId] = useState("")
-//   const [userData, setUserData] = useState<UpdateUserPayload | null>(null)
-
-//   function handleRegister(data: RegisterUserPayload) {
-//     console.log("Registering user:", data)
-//     // TODO: Call API
-//   }
-
-//   function handleUpdate(data: UpdateUserPayload) {
-//     console.log("Updating user:", data)
-//     // TODO: Call API
-//   }
-
-//   function handleTabChange(tab: "register" | "update") {
-//     setActiveTab(tab)
-//   }
-
-//   function handleUserSelect(userId: string) {
-//     setSelectedUserId(userId)
-//   }
-
-//   useEffect(() => {
-//     if (selectedUserId) {
-//       fetchUserData(selectedUserId).then(setUserData)
-//     }
-//   }, [selectedUserId])
-
-//     return (
-//   <div className="max-w-2xl mx-auto mt-10">
-//     <div className="flex border-b mb-4">
-//       <button
-//         className={`px-4 py-2 ${
-//           activeTab === "register"
-//             ? "border-b-2 border-blue-600 font-semibold"
-//             : "text-gray-500"
-//         }`}
-//         onClick={() => handleTabChange("register")}
-//       >
-//         Register User
-//       </button>
-//       <button
-//         className={`px-4 py-2 ${
-//           activeTab === "update"
-//             ? "border-b-2 border-blue-600 font-semibold"
-//             : "text-gray-500"
-//         }`}
-//         onClick={() => handleTabChange("update")}
-//       >
-//         Update User
-//       </button>
-//     </div>
-
-//     {activeTab === "register" && (
-//       <UserForm type="register" onSubmit={handleRegister} teams={mockTeams} />
-//     )}
-
-//     {activeTab === "update" && (
-//       <div className="space-y-4">
-//         <UserSelector
-//           users={mockUsers}
-//           selectedId={selectedUserId}
-//           onSelect={handleUserSelect}
-//         />
-//         {userData && (
-//           <UserForm
-//             type="update"
-//             user={userData}
-//             onSubmit={handleUpdate}
-//             teams={mockTeams}
-//           />
-//         )}
-//   </div>
-//   </div>
-//     )
-// }
-
 import React, { useState, useEffect, type JSX } from "react"
-import type { RegisterUserPayload, UpdateUserPayload } from "../types"
+import {
+  registerUser,
+  updateUser,
+  fetchUserById,
+  fetchAllUserNames,
+} from "../api/users"
+import type {
+  RegisterUserInput,
+  UserResponse,
+  UserName,
+  UpdateUserInput,
+} from "../api/users"
+import type { UpdateUserInputWithId } from "../types"
+import { type Team, fetchAllTeams } from "../api/manager"
 import { UserForm } from "../components/UserForm"
 import { UserSelector } from "../components/UserSelector"
-
-// Mock data - replace with actual data
-const mockTeams = [
-  { id: "1", name: "Engineering" },
-  { id: "2", name: "Marketing" },
-  { id: "3", name: "Sales" },
-]
-
-const mockUsers = [
-  { userId: "1", name: "John Doe" },
-  { userId: "2", name: "Jane Smith" },
-]
-
-// Mock API function - replace with actual API call
-async function fetchUserData(userId: string): Promise<UpdateUserPayload> {
-  // Simulate API call
-  return {
-    userId,
-    firstName: "John",
-    lastName: "Doe",
-    role: "EMPLOYEE",
-    teamId: "1",
-    hireDate: "2023-01-01",
-    monthlySalary: 5000,
-    isActive: true,
-  }
-}
 
 export default function AdminDashboard(): JSX.Element {
   const [activeTab, setActiveTab] = useState<"register" | "update">("register")
   const [selectedUserId, setSelectedUserId] = useState("")
-  const [userData, setUserData] = useState<UpdateUserPayload | null>(null)
+  const [userData, setUserData] = useState<UserResponse | null>(null)
+  const [userList, setUserList] = useState<UserName[]>([])
+  const [teamList, setTeamList] = useState<Team[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [showModal, setShowModal] = useState(false)
+  const [modalStatus, setModalStatus] = useState<
+    "loading" | "success" | "error"
+  >()
+  const [modalMessage, setModalMessage] = useState("")
 
-  function handleRegister(data: RegisterUserPayload) {
-    console.log("Registering user:", data)
-    // TODO: Call API
+  // const userId = "user2"
+
+  async function handleRegister(data: RegisterUserInput) {
+    setModalStatus("loading")
+    setModalMessage("Registering user...")
+    setShowModal(true)
+
+    try {
+      console.log("Registering user:", data)
+      await registerUser(data)
+      setModalStatus("success")
+      setModalMessage("User registered successfully!")
+
+      // Auto-close modal after 2 seconds on success
+      setTimeout(() => setShowModal(false), 2000)
+    } catch (error) {
+      setModalStatus("error")
+      setModalMessage("Failed to register user. Error: " + error)
+    }
   }
 
-  function handleUpdate(data: UpdateUserPayload) {
-    console.log("Updating user:", data)
-    // TODO: Call API
+  async function handleUpdate(data: UpdateUserInputWithId) {
+    setModalStatus("loading")
+    setModalMessage("Updating user...")
+    setShowModal(true)
+
+    try {
+      console.log("Updating user:", data)
+      await updateUser(data.id, data as UpdateUserInput)
+      setModalStatus("success")
+      setModalMessage("User updated successfully!")
+
+      // Auto-close modal after 2 seconds on success
+      setTimeout(() => setShowModal(false), 2000)
+    } catch (error) {
+      setModalStatus("error")
+      setModalMessage("Failed to update user.  Error: " + error)
+    }
   }
 
   function handleTabChange(tab: "register" | "update") {
@@ -160,11 +77,32 @@ export default function AdminDashboard(): JSX.Element {
     setSelectedUserId(userId)
   }
 
+  // function closeModal() {
+  //   setShowModal(false)
+  // }
+
   useEffect(() => {
-    if (selectedUserId) {
-      fetchUserData(selectedUserId).then(setUserData)
+    const getSelectedUserData = async () => {
+      if (selectedUserId) {
+        await fetchUserById(selectedUserId).then(setUserData)
+      }
     }
+    getSelectedUserData()
   }, [selectedUserId])
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          fetchAllUserNames().then(setUserList),
+          fetchAllTeams().then(setTeamList),
+        ])
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadData()
+  }, [])
 
   return (
     <div className="bg-custom-gray min-h-screen py-8">
@@ -195,18 +133,18 @@ export default function AdminDashboard(): JSX.Element {
           </button>
         </div>
 
-        {activeTab === "register" && (
+        {activeTab === "register" && !isLoading && (
           <UserForm
             type="register"
             onSubmit={handleRegister}
-            teams={mockTeams}
+            teams={teamList}
           />
         )}
 
-        {activeTab === "update" && (
+        {activeTab === "update" && !isLoading && (
           <div className="space-y-4 bg-custom-white">
             <UserSelector
-              users={mockUsers}
+              users={userList}
               selectedId={selectedUserId}
               onSelect={handleUserSelect}
             />
@@ -215,12 +153,40 @@ export default function AdminDashboard(): JSX.Element {
                 type="update"
                 user={userData}
                 onSubmit={handleUpdate}
-                teams={mockTeams}
+                teams={teamList}
               />
             )}
           </div>
         )}
       </div>
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+            <div className="flex items-center justify-center mb-4">
+              {modalStatus === "loading" && (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-custom-blue"></div>
+              )}
+              {modalStatus === "success" && (
+                <div className="text-green-500 text-2xl">✓</div>
+              )}
+              {modalStatus === "error" && (
+                <div className="text-red-500 text-2xl">✗</div>
+              )}
+            </div>
+
+            <p className="text-center text-custom-black mb-4">{modalMessage}</p>
+
+            {modalStatus !== "loading" && (
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full bg-custom-red text-white py-2 px-4 rounded hover:bg-opacity-90"
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
