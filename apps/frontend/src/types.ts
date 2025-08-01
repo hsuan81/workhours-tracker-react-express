@@ -17,15 +17,6 @@ export type Project = Omit<ProjectSummary, "hours">
 //   hours: number
 // }
 
-export interface TimeEntry {
-  id?: string
-  projectId: string
-  projectName: string
-  date: string
-  hours: number | null
-  status: "new" | "edited" | "deleted" | "unchanged"
-}
-
 // API Response Types
 
 export interface DailySummary {

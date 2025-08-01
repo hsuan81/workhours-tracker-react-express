@@ -1,12 +1,12 @@
-import type { TimeEntry } from "../types"
+import type { TimeEntryWithStatus } from "../api/timeEntry"
 
 type EntryRowProps = {
-  entry: TimeEntry
+  entry: TimeEntryWithStatus
   index: number
   allProjects: { id: string; name: string }[]
   selectedProjectIds: string[]
   onProjectChange: (index: number, projectId: string) => void
-  onHourChange: (index: number, hours: number | null) => void
+  onHourChange: (index: number, hours: number) => void
   onDelete: (index: number) => void
 }
 
@@ -48,7 +48,8 @@ export default function EntryRow({
           value={entry.hours ?? ""}
           onChange={(e) => {
             const val = e.target.value
-            onHourChange(index, val === "" ? null : parseFloat(val))
+            onHourChange(index, parseFloat(val))
+            // onHourChange(index, val === "" ? null : parseFloat(val))
           }}
           className={`w-24 border px-1 ${isInvalid ? "border-red-500" : ""}`}
         />

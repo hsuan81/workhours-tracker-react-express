@@ -84,7 +84,7 @@ export default function AdminDashboard(): JSX.Element {
   useEffect(() => {
     const getSelectedUserData = async () => {
       if (selectedUserId) {
-        await fetchUserById(selectedUserId).then(setUserData)
+        fetchUserById(selectedUserId).then(setUserData)
       }
     }
     getSelectedUserData()

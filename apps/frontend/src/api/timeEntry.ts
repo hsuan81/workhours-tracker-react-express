@@ -59,6 +59,10 @@ export interface TimeEntryResponse {
   created: TimeEntryInput[]
 }
 
+export interface TimeEntryWithStatus extends TimeEntryInput {
+  status: "new" | "edited" | "deleted" | "unchanged"
+}
+
 export async function logTimeEntries(
   entries: TimeEntryInput[]
 ): Promise<TimeEntryResponse> {
@@ -66,4 +70,30 @@ export async function logTimeEntries(
     "/time-entries/",
     entries
   )
+}
+
+export async function fetchTimeEntriesByUser(
+  userId: string,
+  date?: string
+): Promise<TimeEntryWithStatus[]> {
+  // const params = new URLSearchParams({ userId })
+  const params = date ? new URLSearchParams({ date }) : new URLSearchParams()
+  const entries = await apiGet<TimeEntryInput[]>(
+    `/time-entries/${userId}?${params.toString()}`
+  )
+  return entries.map((e) => ({ ...e, status: "unchanged" }))
+}
+
+export interface Project {
+  id: string
+  name: string
+}
+
+export async function fetchActiveProjects(): Promise<Project[]> {
+  return await apiGet<Project[]>("/projects/")
+}
+
+export async function fetchProjectById(projectId: string): Promise<Project> {
+  const params = new URLSearchParams({ projectId })
+  return await apiGet<Project>(`/projects/${params.toString()}`)
 }
