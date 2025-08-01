@@ -4,9 +4,13 @@ import { type DailySummary, fetchTodaySummary } from "../api/timeEntry"
 
 export function TodaySummaryCard() {
   const [summary, setSummary] = useState<DailySummary | null>(null)
+  const userId = "user1"
 
   useEffect(() => {
-    fetchTodaySummary("user1", "2025-07-28").then(setSummary)
+    const getTodaySummary = async () => {
+      await fetchTodaySummary(userId, "2025-07-28").then(setSummary)
+    }
+    getTodaySummary()
   }, [])
 
   if (!summary) return <div>Loading today's summary...</div>
