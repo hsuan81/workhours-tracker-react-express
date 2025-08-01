@@ -1,8 +1,9 @@
 // src/routes/entries.ts
 import express, { Request, Response } from "express"
 import { PrismaClient, Prisma } from "../generated/prisma/index.js"
-import { TimeEntry } from "shared/types.js"
+import { TimeEntry } from "shared/types"
 import { syncOvertimeSummary } from "../utils/overtime"
+import { fetchTimeEntriesByUser } from "../services/timeEntriesService.js"
 
 const router = express.Router()
 
@@ -220,6 +221,19 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
     overtimePay: _sum.overtimePay?.toNumber() ?? 0,
     overtimeLimit: OVERTIME_LIMIT,
   })
+})
+
+router.get("/:userId", async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId
+    const dateParam = req.query.date as string | undefined
+    const date = dateParam ? new Date(dateParam) : new Date()
+    const entries = await fetchTimeEntriesByUser(userId, date)
+    res.json(entries)
+  } catch (err) {
+    console.error("Error fetching time entries:", err)
+    res.status(500).json({ error: "Failed to fetch time entries" })
+  }
 })
 
 export default router
