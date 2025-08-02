@@ -238,7 +238,7 @@ export default function LogHoursForm() {
         </button>
         <button
           onClick={handleCancel}
-          className="bg-custom-red text-custom-white px-3 py-1"
+          className="bg-custom-red text-custom-white px-3 py-1 rounded"
         >
           Cancel
         </button>
@@ -265,7 +265,7 @@ export default function LogHoursForm() {
           <button
             onClick={handleAdd}
             disabled={!hasAvailableProject}
-            className="bg-custom-blue text-custom-white mt-2 disabled:opacity-50"
+            className="bg-custom-blue text-custom-white mt-2 rounded disabled:opacity-50"
           >
             + Add Project
           </button>
@@ -323,7 +323,7 @@ export default function LogHoursForm() {
             {modalStatus !== "loading" && (
               <button
                 onClick={() => setShowModal(false)}
-                className="w-full bg-custom-red text-white py-2 px-4 rounded hover:bg-opacity-90"
+                className="bg-custom-red text-white py-1 px-4 rounded hover:bg-opacity-90 mx-auto block"
               >
                 Close
               </button>

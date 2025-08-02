@@ -56,7 +56,7 @@ export default function EntryRow({
         <span>hours</span>
         <button
           onClick={() => onDelete(index)}
-          className="bg-custom-red text-custom-white px-2 py-1 rounded"
+          className="bg-custom-red text-custom-white px-2 py-0.5 rounded"
         >
           ×
         </button>
