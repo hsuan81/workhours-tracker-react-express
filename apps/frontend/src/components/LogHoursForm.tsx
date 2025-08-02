@@ -20,6 +20,10 @@ export default function LogHoursForm() {
   const [user, setUser] = useState<UserResponse>()
   const [isLoading, setIsLoading] = useState(true)
 
+  const [showModal, setShowModal] = useState(false)
+  const [modalStatus, setModalStatus] = useState("loading")
+  const [modalMessage, setModalMessage] = useState("")
+
   const userId = "user1"
 
   useEffect(() => {
@@ -171,14 +175,26 @@ export default function LogHoursForm() {
   }
 
   const handleSave = async () => {
-    const created = entries.filter((e) => e.status === "new")
-    const updated = entries.filter((e) => e.status === "edited")
-    const deleted = entries
-      .filter((e) => e.status === "deleted" && e.id)
-      .map((e) => ({ id: e.id }))
-    console.log({ created, updated, deleted })
-    // Send to backend
-    await logTimeEntries(entries)
+    try {
+      const created = entries.filter((e) => e.status === "new")
+      const updated = entries.filter((e) => e.status === "edited")
+      const deleted = entries
+        .filter((e) => e.status === "deleted" && e.id)
+        .map((e) => ({ id: e.id }))
+      console.log({ created, updated, deleted })
+      // Send to backend
+      await logTimeEntries(entries)
+      setInitialEntries(entries)
+      setModalStatus("success")
+      setModalMessage("Successfully saved!")
+      // Auto-close modal after 2 seconds on success
+      setTimeout(() => setShowModal(false), 2000)
+    } catch (error) {
+      setModalStatus("error")
+      setModalMessage(`Something went wrong. Error:${error}`)
+    } finally {
+      setShowModal(true)
+    }
   }
 
   // Only calculate if user data is loaded
@@ -287,6 +303,34 @@ export default function LogHoursForm() {
           </li>
         </ul>
       </div> */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+            <div className="flex items-center justify-center mb-4">
+              {modalStatus === "loading" && (
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-custom-blue"></div>
+              )}
+              {modalStatus === "success" && (
+                <div className="text-green-500 text-2xl">✓</div>
+              )}
+              {modalStatus === "error" && (
+                <div className="text-red-500 text-2xl">✗</div>
+              )}
+            </div>
+
+            <p className="text-center text-custom-black mb-4">{modalMessage}</p>
+
+            {modalStatus !== "loading" && (
+              <button
+                onClick={() => setShowModal(false)}
+                className="w-full bg-custom-red text-white py-2 px-4 rounded hover:bg-opacity-90"
+              >
+                Close
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
