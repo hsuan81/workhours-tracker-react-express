@@ -1,4 +1,3 @@
-// shared/types.ts
 // API Request Types
 export interface TimeEntry {
   id?: string

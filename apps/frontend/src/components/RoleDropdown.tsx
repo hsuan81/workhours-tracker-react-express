@@ -1,5 +1,5 @@
 import React, { type JSX } from "react"
-import { USER_ROLES, type UserRole } from "../types"
+import { USER_ROLES, type UserRole } from "../../../../shared/types"
 
 interface Props {
   value: UserRole

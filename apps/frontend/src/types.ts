@@ -1,5 +1,7 @@
 // src/types/api.ts
 import type { UpdateUserInput } from "./api/users"
+import type { UserRole } from "shared/types"
+
 export interface ProjectSummary {
   id: string
   name: string
@@ -32,7 +34,8 @@ export interface UserOverview {
   id: string
   name: string
   email: string
-  role: "EMPLOYEE" | "MANAGER" | "ADMINISTRATOR"
+  role: UserRole
+  // role: "EMPLOYEE" | "MANAGER" | "ADMINISTRATOR"
   teamId: string
   hireDate: string // ISO date
   monthlySalary: number
@@ -40,8 +43,6 @@ export interface UserOverview {
 }
 
 // Administration Page Types
-export const USER_ROLES = ["EMPLOYEE", "ADMINISTRATOR", "MANAGER"] as const
-export type UserRole = (typeof USER_ROLES)[number]
 
 export interface UpdateUserInputWithId extends UpdateUserInput {
   id: string

@@ -3,10 +3,12 @@ import { TodaySummaryCard } from "../components/TodaySummaryCard"
 import { MonthlyOverviewCard } from "../components/MonthlyOverviewCard"
 
 export default function EmployeeDashboard() {
+  const user = { id: "user1", name: "John Doe" }
+
   return (
     <div className="bg-custom-gray p-6 w-full min-h-screen">
       <div className="flex justify-between items-center mb-4">
-        <div className="text-custom-black font-bold">User Name</div>
+        <div className="text-custom-black font-bold">{user.name}</div>
         <div>{new Date().toLocaleDateString()}</div>
       </div>
 

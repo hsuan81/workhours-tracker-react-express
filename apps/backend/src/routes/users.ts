@@ -6,7 +6,7 @@ import {
   getAllUsersName,
   getUserById,
 } from "../services/userService"
-import { registerUserSchema } from "../schemas/userSchemas"
+import { registerUserSchema, updateUserSchema } from "../schemas/userSchemas"
 // import { requireRole, secureRoute } from "../middleware/authMiddleware"
 
 const router = express.Router()
@@ -57,7 +57,8 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
 router.put("/:id", async (req: Request, res: Response): Promise<void> => {
   try {
     const userId = req.params.id
-    const updatedUser = await updateUser(userId, req.body)
+    const data = updateUserSchema.parse(req.body)
+    const updatedUser = await updateUser(userId, data)
     res.status(200).json({ success: true, user: updatedUser })
   } catch (err) {
     console.error("Error updating user:", err)
