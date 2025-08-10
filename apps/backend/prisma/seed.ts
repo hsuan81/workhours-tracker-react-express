@@ -1,5 +1,6 @@
 // prisma/seed.ts
 import { PrismaClient, Prisma } from "../src/generated/prisma/index.js"
+import { hash } from "../src/utils/passwordUtils"
 
 const prisma = new PrismaClient()
 
@@ -13,7 +14,19 @@ async function main() {
 
   console.log("🌱 Starting seed...")
 
+  const passwordHash = await hash("password12345")
+
   // Team created
+
+  await prisma.team.upsert({
+    where: { id: "team0" },
+    update: {},
+    create: {
+      id: "team0",
+      name: "Admins",
+    },
+  })
+
   await prisma.team.upsert({
     where: { id: "team1" },
     update: {},
@@ -23,7 +36,46 @@ async function main() {
     },
   })
 
+  await prisma.team.upsert({
+    where: { id: "team2" },
+    update: {},
+    create: {
+      id: "team2",
+      name: "Design Team",
+    },
+  })
+
+  await prisma.team.upsert({
+    where: { id: "team3" },
+    update: {},
+    create: {
+      id: "team3",
+      name: "QA Team",
+    },
+  })
+
   // Create Users
+  const user0 = await prisma.user.upsert({
+    where: { id: "userAdmin" },
+    update: {},
+    create: {
+      id: "userAdmin",
+      firstName: "Jean",
+      lastName: "Super",
+      email: "super@example.com",
+      hourlyRate: new Prisma.Decimal(75.0),
+      role: "ADMINISTRATOR",
+      passwordHash: passwordHash, // Mocked hash
+      team: {
+        connect: {
+          id: "team0", // Connect to existing team by ID
+        },
+      },
+      hireDate: new Date("2023-01-15"),
+      monthlySalary: 999999,
+    },
+  })
+
   const user1 = await prisma.user.upsert({
     where: { id: "user1" },
     update: {},
@@ -34,7 +86,7 @@ async function main() {
       email: "john@example.com",
       hourlyRate: new Prisma.Decimal(75.0),
       role: "EMPLOYEE",
-      passwordHash: "hashed-password-123", // Mocked hash
+      passwordHash: passwordHash, // Mocked hash
       team: {
         connect: {
           id: "team1", // Connect to existing team by ID
@@ -55,7 +107,7 @@ async function main() {
       email: "sarah@example.com",
       hourlyRate: new Prisma.Decimal(105.0),
       role: "MANAGER",
-      passwordHash: "hashed-password-456", // Mocked hash
+      passwordHash: passwordHash, // Mocked hash
       teamId: "team1",
       hireDate: new Date("2022-05-20"),
       monthlySalary: 82000,

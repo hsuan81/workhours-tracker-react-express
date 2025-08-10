@@ -77,6 +77,8 @@ model User {
   leaveRequests         LeaveRequest[]  @relation("LeaveRequestUser")
   approvedLeaveRequests LeaveRequest[]  @relation("LeaveRequestApprover")
   DailyOvertime         DailyOvertime[]
+  sessions              Session[]       @relation("SessionUser")
+
 
   @@index([email])
   @@index([role])
@@ -115,6 +117,26 @@ model Project {
   creator     User?           @relation("ProjectCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   members     ProjectMember[]
   timeEntries TimeEntry[]
+}
+
+// =============================================
+// Session TABLES
+// =============================================
+
+model Session {
+  id        String   @id // Session ID (same as cookie value)
+  userId    String     // Optional: link to user for easier cleanup
+  data      Json     // Session data as JSON
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relationships
+  user      User?    @relation("SessionUser", fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Indexes for performance
+  @@index([expiresAt])
+  @@index([userId])
 }
 
 // =============================================

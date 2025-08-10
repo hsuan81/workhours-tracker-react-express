@@ -1,7 +1,9 @@
 import express, { Request, Response } from "express"
+import session from "express-session"
 import cors from "cors"
 import dotenv from "dotenv"
 import { PrismaClient } from "./generated/prisma/index.js"
+import authRoutes from "./routes/auth"
 import timeEntryRoutes from "./routes/timeEntries"
 import userRoutes from "./routes/users"
 import managerRoutes from "./routes/manager" // Import manager routes
@@ -13,11 +15,22 @@ const app = express()
 app.use(
   cors({
     origin: process.env.CORS_ORIGIN,
-    // credentials: true, // If using cookie or auth header, add this line
+    credentials: true, // If using cookie or auth header, add this line
   })
 ) // Enable CORS for a limited set of origins
 app.use(express.json())
 
+app.use(
+  session({
+    name: "sessionId",
+    secret: "your-secret", // use env var in prod
+    resave: false, // Only save if session modified
+    saveUninitialized: false, // Don't save empty sessions
+    cookie: { sameSite: "strict", secure: false, maxAge: 24 * 60 * 60 * 1000 }, // secure: true if using HTTPS
+  })
+)
+
+app.use("/api/auth", authRoutes)
 app.use("/api/time-entries", timeEntryRoutes)
 app.use("/api/users", userRoutes) // Import user routes
 app.use("/api/manager", managerRoutes) // Import manager routes

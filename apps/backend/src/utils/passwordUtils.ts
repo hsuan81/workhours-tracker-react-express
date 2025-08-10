@@ -8,7 +8,7 @@ export async function hash(password: string): Promise<string> {
 
 // Compares a password with a hash to check if they match
 // Returns true if they match, false otherwise
-export async function compare(
+export async function comparePasswords(
   password: string,
   hash: string
 ): Promise<boolean> {
