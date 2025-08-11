@@ -24,7 +24,7 @@ async function apiRequest<T>(
 }
 
 export async function apiGet<T>(path: string): Promise<T> {
-  return apiRequest<T>(path)
+  return apiRequest<T>(path, { credentials: "include" })
 }
 
 export async function apiPost<T, U = unknown>(
@@ -34,6 +34,7 @@ export async function apiPost<T, U = unknown>(
   return apiRequest<T>(path, {
     method: "POST",
     body: JSON.stringify(body),
+    credentials: "include",
   })
 }
 
@@ -44,9 +45,10 @@ export async function apiPut<T, U = unknown>(
   return apiRequest<T>(path, {
     method: "PUT",
     body: JSON.stringify(body),
+    credentials: "include",
   })
 }
 
 export async function apiDelete<T>(path: string): Promise<T> {
-  return apiRequest<T>(path, { method: "DELETE" })
+  return apiRequest<T>(path, { method: "DELETE", credentials: "include" })
 }

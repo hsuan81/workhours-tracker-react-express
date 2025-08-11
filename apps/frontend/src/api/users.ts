@@ -1,6 +1,6 @@
 // apps/frontend/src/api/users.ts
 import { apiPost, apiPut, apiGet } from "../utils/api"
-import type { UserRole } from "../types"
+import type { UserRole } from "../../../../shared/types"
 
 // export type UserRole = "EMPLOYEE" | "ADMINISTRATOR" | "MANAGER"
 
