@@ -10,13 +10,15 @@ export async function loginController(
 ): Promise<void> {
   const { email, password } = req.body
   if (!email || !password) {
-    res.status(400).json({ message: "Email and password required" })
+    res
+      .status(400)
+      .json({ success: false, message: "Email and password required" })
     return
   }
 
   const user = await prisma.user.findUnique({ where: { email } })
   if (!user || !(await comparePasswords(password, user.passwordHash))) {
-    res.status(401).json({ message: "Invalid credentials" })
+    res.status(401).json({ success: false, message: "Invalid credentials" })
     return
   }
 
@@ -27,6 +29,7 @@ export async function loginController(
     firstName: user.firstName,
     lastName: user.lastName,
     email: user.email,
+    changePassword: user.mustChangePassword,
     sessionCreatedAt: new Date().toISOString(),
     lastActivity: new Date().toISOString(),
   }

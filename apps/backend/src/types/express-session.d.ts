@@ -7,6 +7,7 @@ declare module "express-session" {
     firstName: string | null
     lastName: string | null
     role: string
+    changePassword: boolean
     sessionCreatedAt: string
     lastActivity: string
   }

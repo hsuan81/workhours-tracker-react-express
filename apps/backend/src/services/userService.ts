@@ -1,7 +1,11 @@
 // apps/backend/services/userService.ts
 import { PrismaClient, UserRole } from "../generated/prisma/index.js"
 import { toISODate } from "../utils/calendarUtils.js"
-import { hash, generatePassword } from "../utils/passwordUtils"
+import {
+  hash,
+  generatePassword,
+  comparePasswords,
+} from "../utils/passwordUtils"
 import { sendWelcomeEmail } from "../utils/emailUtils"
 
 interface RegisterUserInput {
@@ -43,6 +47,12 @@ interface UserName {
   id: string
   firstName: string
   lastName: string
+}
+
+interface ChangePasswordInput {
+  userId: string
+  currentPassword: string
+  newPassword: string
 }
 
 const prisma = new PrismaClient()
@@ -233,4 +243,50 @@ export async function updateUser(
     hourlyRate: updatedUser.hourlyRate!.toNumber(),
     isActive: updatedUser.isActive,
   }
+}
+
+export async function changePassword({
+  userId,
+  currentPassword,
+  newPassword,
+}: ChangePasswordInput) {
+  // BUSINESS VALIDATION (Domain rules)
+  if (newPassword.length < 8) {
+    throw new Error("Password must be at least 8 characters long")
+  }
+
+  // Get user
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { passwordHash: true },
+  })
+
+  if (!user) {
+    throw new Error("User not found")
+  }
+
+  // Verify current password (business rule)
+  const isCurrentPasswordValid = await comparePasswords(
+    currentPassword,
+    user.passwordHash
+  )
+
+  if (!isCurrentPasswordValid) {
+    throw new Error("Current password is incorrect")
+  }
+
+  // Check if new password is different (business rule)
+  const isSamePassword = await comparePasswords(newPassword, user.passwordHash)
+  if (isSamePassword) {
+    throw new Error("New password must be different from current password")
+  }
+
+  // Business logic
+  const hashedNewPassword = await hash(newPassword)
+  await prisma.user.update({
+    where: { id: userId },
+    data: { passwordHash: hashedNewPassword },
+  })
+
+  return { success: true }
 }

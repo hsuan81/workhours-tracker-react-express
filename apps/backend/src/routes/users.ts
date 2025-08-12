@@ -5,8 +5,10 @@ import {
   updateUser,
   getAllUsersName,
   getUserById,
+  changePassword,
 } from "../services/userService"
 import { registerUserSchema, updateUserSchema } from "../schemas/userSchemas"
+import { error } from "node:console"
 // import { requireRole, secureRoute } from "../middleware/authMiddleware"
 
 const router = express.Router()
@@ -27,6 +29,76 @@ router.post(
     }
   }
 )
+
+router.post("/password", async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { currentPassword, newPassword } = req.body
+
+    // CHECK SESSION FIRST
+    if (!req.session || !req.session.user || !req.session.user.userId) {
+      res.status(401).json({
+        success: false,
+        message: "Not authenticated",
+      })
+      return
+    }
+
+    // Input validation
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      })
+      return
+    }
+
+    if (newPassword.length < 8) {
+      res.status(400).json({
+        success: false,
+        message: "New password must be at least 8 characters",
+      })
+      return
+    }
+
+    // Call service - now safe to access userId
+    await changePassword({
+      userId: req.session.user.userId,
+      currentPassword,
+      newPassword,
+    })
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully",
+    })
+  } catch (error) {
+    const err = error as Error
+    console.error("Password change error:", err)
+
+    // Handle known errors
+    if (err.message === "User not found") {
+      res.status(404).json({
+        success: false,
+        message: "User not found",
+      })
+      return
+    }
+
+    if (err.message === "Current password is incorrect") {
+      res.status(400).json({
+        success: false,
+        message: "Current password is incorrect",
+      })
+      return
+    }
+
+    // Unknown errors
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    })
+  }
+})
 
 router.get("/", async (req: Request, res: Response): Promise<void> => {
   try {
