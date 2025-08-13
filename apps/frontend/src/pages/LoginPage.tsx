@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { loginUser } from "../api/auth"
 import { useNavigate } from "../router/navHooks"
+import type { UnexpectedError } from "../utils/api"
 
 /**
  * Session-Based Authentication Login Component
@@ -125,32 +126,58 @@ const LoginPage: React.FC = () => {
       // const data: LoginResponse = await response.json()
       const response = await loginUser(formData)
 
-      if (response.success) {
-        setMessage("Login successful!")
-        // Handle successful login here (e.g., redirect, update app state, etc.)
-        console.log("Login successful:", response.message)
-
-        // Session is automatically handled via cookies (credentials: 'include')
-        // No need to manually store tokens - the session cookie is set by the server
-
-        // Example: Redirect to dashboard after successful login
-        // window.location.href = "/dashboard"
-        // redirect("dashboard")
-        navigate("dashboard")
-
-        // Example: Update global authentication state
-        // setAuthenticatedUser(data.user);
-
-        // Example: Call a function to verify session was established
-        // const sessionValid = await checkSessionStatus();
-        // if (sessionValid) {
-        //   console.log('Session established successfully');
-        // }
-      } else {
-        setMessage(response.message || "Login failed. Please try again.")
+      if (!response.ok) {
+        switch (response.error.code) {
+          case "INVALID_CREDENTIALS":
+            setMessage("Email or password is incorrect.")
+            break
+          case "VALIDATION_REQUIRED":
+            setMessage("Please fill in both email and password.")
+            break
+          case "INTERNAL_ERROR": {
+            const traceId = (response.error.details as UnexpectedError)?.traceId
+            setMessage(
+              `Something went wrong. Please try again.${
+                traceId ? ` (Ref: ${traceId})` : ""
+              }`
+            )
+            break
+          }
+          default:
+            setMessage(response.error.message || "Request failed.")
+        }
+        return
       }
+
+      // if (response.success) {
+      setMessage("Login successful!")
+      //   // Handle successful login here (e.g., redirect, update app state, etc.)
+      //   console.log("Login successful:", response.message)
+
+      //   // Session is automatically handled via cookies (credentials: 'include')
+      //   // No need to manually store tokens - the session cookie is set by the server
+
+      //   // Example: Redirect to dashboard after successful login
+      //   // window.location.href = "/dashboard"
+      //   // redirect("dashboard")
+      navigate("dashboard")
+
+      //   // Example: Update global authentication state
+      //   // setAuthenticatedUser(data.user);
+
+      //   // Example: Call a function to verify session was established
+      //   // const sessionValid = await checkSessionStatus();
+      //   // if (sessionValid) {
+      //   //   console.log('Session established successfully');
+      //   // }
+      // }
     } catch (error) {
       console.error("Login error:", error)
+      if (error instanceof Error) {
+        setMessage(error.message) // This will be the backend's error message
+      } else {
+        setMessage("Network error. Please check your connection and try again.")
+      }
       setMessage("Network error. Please check your connection and try again.")
     } finally {
       setIsLoading(false)
@@ -160,17 +187,12 @@ const LoginPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-custom-gray flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
-        <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Login
-        </h2>
+        <h2 className="text-2xl font-bold text-center mb-6">Login</h2>
 
         <div className="space-y-4">
           {/* Email Field */}
           <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
+            <label htmlFor="email" className="block text-sm font-medium mb-1">
               Email Address
             </label>
             <input
@@ -195,7 +217,7 @@ const LoginPage: React.FC = () => {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-gray-700 mb-1"
+              className="block text-sm font-medium text-custom-black mb-1"
             >
               Password
             </label>
@@ -222,7 +244,7 @@ const LoginPage: React.FC = () => {
             type="button"
             onClick={handleSubmit}
             disabled={isLoading}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
+            className="w-full bg-custom-blue text-custom-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200"
           >
             {isLoading ? "Signing In..." : "Sign In"}
           </button>
