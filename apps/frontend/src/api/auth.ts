@@ -1,4 +1,4 @@
-import { apiPost, apiPut, apiGet } from "../utils/api"
+import { apiPost, type ApiResult } from "../utils/api"
 
 interface loginInput {
   email: string
@@ -12,12 +12,10 @@ interface loginResponse {
 
 export async function loginUser(
   loginInput: loginInput
-): Promise<loginResponse> {
-  return apiPost("/auth/login", loginInput)
+): Promise<ApiResult<loginResponse>> {
+  return apiPost<loginResponse>("/auth/login", loginInput)
 }
 
-export async function logoutUser(): Promise<loginResponse> {
-  return apiPost("/auth/logout", {})
+export async function logoutUser(): Promise<ApiResult<loginResponse>> {
+  return apiPost<loginResponse>("/auth/logout", {})
 }
-
-export async function changePassword() {}
