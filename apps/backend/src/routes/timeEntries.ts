@@ -3,6 +3,12 @@ import express, { Request, Response } from "express"
 import { PrismaClient, Prisma } from "../generated/prisma/index.js"
 import { TimeEntry } from "shared/types"
 import { fetchTimeEntriesByUser } from "../services/timeEntriesService.js"
+import {
+  ApiErrorCode,
+  sendFail,
+  sendOk,
+  sendUnexpected,
+} from "../utils/http.js"
 
 const router = express.Router()
 
@@ -36,9 +42,11 @@ router.post("/", async (req: Request, res: Response) => {
   )
 
   if (notFoundIds.size > 0) {
-    res.status(400).json({
-      error: `Time entry ids not found: ${Array.from(notFoundIds).join(", ")}`,
-    })
+    sendFail(
+      res,
+      "NOT_FOUND",
+      `Time entry ids not found: ${Array.from(notFoundIds).join(", ")}`
+    )
     return
   }
 
@@ -46,10 +54,12 @@ router.post("/", async (req: Request, res: Response) => {
     const resultStats: {
       updated: TimeEntry[]
       created: { id: string }[]
+      code: ApiErrorCode | null
       error: string | null
     } = {
       updated: [],
       created: [],
+      code: null,
       error: null,
     }
     try {
@@ -84,18 +94,23 @@ router.post("/", async (req: Request, res: Response) => {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
         switch (error.code) {
           case "P2002":
+            resultStats.code = "CONFLICT"
             resultStats.error = "Duplicate entry - record already exists"
             break
           case "P2025":
+            resultStats.code = "NOT_FOUND"
             resultStats.error = "Record not found"
             break
           case "P2003":
+            resultStats.code = "CONFLICT"
             resultStats.error = "Foreign key constraint violation"
             break
           default:
+            resultStats.code = "DATABASE_ERROR"
             resultStats.error = `Database error: ${error.message}`
         }
       } else {
+        resultStats.code = "DATABASE_ERROR"
         resultStats.error = "An unexpected error occurred"
       }
     } finally {
@@ -103,123 +118,122 @@ router.post("/", async (req: Request, res: Response) => {
     }
   })
   if (results.error) {
-    res.status(400).json({ error: results.error })
+    sendFail(res, results.code!, results.error)
   }
-  res.status(200).json({
-    updated: results.updated,
-    created: results.created,
-  })
+
+  sendOk(res, { updated: results.updated, created: results.created })
 })
 
 router.get("/summary", async (req: Request, res: Response) => {
-  const userId = req.query.userId as string // simulate login, for testing purposes
-  const dateParam = req.query.date as string | undefined
+  try {
+    const userId = req.query.userId as string // simulate login, for testing purposes
+    const dateParam = req.query.date as string | undefined
 
-  const date = dateParam ? new Date(dateParam) : new Date()
+    const date = dateParam ? new Date(dateParam) : new Date()
 
-  const entries = await prisma.timeEntry.findMany({
-    where: {
-      userId,
-      date,
-    },
-    include: { project: true },
-  })
+    const entries = await prisma.timeEntry.findMany({
+      where: {
+        userId,
+        date,
+      },
+      include: { project: true },
+    })
 
-  const totalHours = entries.reduce(
-    (sum, e) => sum.plus(e.hours),
-    new Prisma.Decimal(0)
-  )
-  const totalHoursNumber = totalHours.toNumber()
-  const regularHoursNumber = Math.min(totalHoursNumber, 8)
-  // const overtimeHours =
-  //   totalHoursNumber > 8
-  //     ? totalHours.minus(new Prisma.Decimal(8))
-  //     : new Prisma.Decimal(0)
+    const totalHours = entries.reduce(
+      (sum, e) => sum.plus(e.hours),
+      new Prisma.Decimal(0)
+    )
+    const totalHoursNumber = totalHours.toNumber()
+    const regularHoursNumber = Math.min(totalHoursNumber, 8)
 
-  const overtimeRecord = await prisma.dailyOvertime.findFirst({
-    where: { userId, date },
-    select: { overtimeHours: true, overtimePay: true },
-  })
+    const overtimeRecord = await prisma.dailyOvertime.findFirst({
+      where: { userId, date },
+      select: { overtimeHours: true, overtimePay: true },
+    })
 
-  // const user = await prisma.user.findUnique({ where: { id: userId } })
-  // const rate = user?.hourlyRate || null
-  // const overtimePayNumber =
-  //   rate !== null
-  //     ? Number(overtimeHours.times(rate).times(new Prisma.Decimal(1.33)))
-  //     : null
-
-  res.json({
-    date: date.toISOString().split("T")[0],
-    totalHours,
-    regularHours: regularHoursNumber,
-    overtimeHours: overtimeRecord ? overtimeRecord.overtimeHours.toNumber() : 0,
-    overtimePay: overtimeRecord ? overtimeRecord.overtimePay.toNumber() : 0,
-    projects: entries.map((e) => ({
-      name: e.project.name,
-      hours: e.hours,
-    })),
-  })
+    sendOk(res, {
+      date: date.toISOString().split("T")[0],
+      totalHours,
+      regularHours: regularHoursNumber,
+      overtimeHours: overtimeRecord
+        ? overtimeRecord.overtimeHours.toNumber()
+        : 0,
+      overtimePay: overtimeRecord ? overtimeRecord.overtimePay.toNumber() : 0,
+      projects: entries.map((e) => ({
+        name: e.project.name,
+        hours: e.hours,
+      })),
+    })
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
+  }
 })
 
 router.get("/monthly-overview", async (req: Request, res: Response) => {
-  const userId = req.query.userId as string // simulate login, for testing purposes
-  const month =
-    parseInt(req.query.month as string, 10) || new Date().getMonth() + 1
-  const year =
-    parseInt(req.query.year as string, 10) || new Date().getFullYear()
+  try {
+    const userId = req.query.userId as string // simulate login, for testing purposes
+    const month =
+      parseInt(req.query.month as string, 10) || new Date().getMonth() + 1
+    const year =
+      parseInt(req.query.year as string, 10) || new Date().getFullYear()
 
-  const startDate = new Date(year, month - 1, 1)
-  const endDate = new Date(year, month, 0)
+    const startDate = new Date(year, month - 1, 1)
+    const endDate = new Date(year, month, 0)
 
-  const dayEntries = await prisma.timeEntry.groupBy({
-    by: ["date"],
-    where: {
-      userId,
-      date: {
-        gte: startDate,
-        lte: endDate,
+    const dayEntries = await prisma.timeEntry.groupBy({
+      by: ["date"],
+      where: {
+        userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
       },
-    },
-    _sum: {
-      hours: true,
-    },
-  })
-
-  const daysWorked = dayEntries.length
-
-  const totalHours = dayEntries.reduce(
-    (sum, e) => sum.plus(e._sum.hours ?? 0),
-    new Prisma.Decimal(0)
-  )
-  const regularHoursNumber = dayEntries.reduce(
-    (sum, e) => (sum += e._sum.hours ? Math.min(Number(e._sum.hours), 8) : 0),
-    0
-  )
-
-  // Calculate overtime hours and pay
-  const { _sum } = await prisma.dailyOvertime.aggregate({
-    _sum: {
-      overtimeHours: true,
-      overtimePay: true,
-    },
-    where: {
-      userId,
-      date: {
-        gte: startDate,
-        lte: endDate,
+      _sum: {
+        hours: true,
       },
-    },
-  })
+    })
 
-  res.json({
-    year,
-    month,
-    daysWorked,
-    regularHours: regularHoursNumber,
-    overtimeHours: _sum.overtimeHours?.toNumber() ?? 0,
-    overtimePay: _sum.overtimePay?.toNumber() ?? 0,
-    overtimeLimit: OVERTIME_LIMIT,
-  })
+    const daysWorked = dayEntries.length
+
+    const totalHours = dayEntries.reduce(
+      (sum, e) => sum.plus(e._sum.hours ?? 0),
+      new Prisma.Decimal(0)
+    )
+    const regularHoursNumber = dayEntries.reduce(
+      (sum, e) => (sum += e._sum.hours ? Math.min(Number(e._sum.hours), 8) : 0),
+      0
+    )
+
+    // Calculate overtime hours and pay
+    const { _sum } = await prisma.dailyOvertime.aggregate({
+      _sum: {
+        overtimeHours: true,
+        overtimePay: true,
+      },
+      where: {
+        userId,
+        date: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+    })
+
+    sendOk(res, {
+      year,
+      month,
+      daysWorked,
+      regularHours: regularHoursNumber,
+      overtimeHours: _sum.overtimeHours?.toNumber() ?? 0,
+      overtimePay: _sum.overtimePay?.toNumber() ?? 0,
+      overtimeLimit: OVERTIME_LIMIT,
+    })
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
+  }
 })
 
 router.get("/:userId", async (req: Request, res: Response) => {
@@ -228,10 +242,12 @@ router.get("/:userId", async (req: Request, res: Response) => {
     const dateParam = req.query.date as string | undefined
     const date = dateParam ? new Date(dateParam) : new Date()
     const entries = await fetchTimeEntriesByUser(userId, date)
-    res.json(entries)
-  } catch (err) {
-    console.error("Error fetching time entries:", err)
-    res.status(500).json({ error: "Failed to fetch time entries" })
+    sendOk(res, entries)
+  } catch (error) {
+    console.error("Error fetching time entries:", error)
+    const err = error as Error
+
+    sendUnexpected(res, err)
   }
 })
 

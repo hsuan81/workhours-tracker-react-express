@@ -6,6 +6,7 @@ import {
   getTeams,
   getTeamMembers,
 } from "../services/managerService"
+import { sendOk, sendUnexpected } from "../utils/http"
 
 const router = express.Router()
 
@@ -24,9 +25,10 @@ router.get("/team-summary", async (req: Request, res: Response) => {
       teamId: teamId as string | undefined,
       month: month as string | undefined,
     })
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: "Failed to get team summary", details: err })
+    sendOk(res, result)
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
     // next(err)
   }
 })
@@ -47,9 +49,10 @@ router.get("/team-entries", async (req: Request, res: Response) => {
       teamId: teamId as string | undefined,
       month: month as string | undefined,
     })
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: "Failed to get team entries", details: err })
+    sendOk(res, result)
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
     // next(err)
   }
 })
@@ -64,9 +67,10 @@ router.get("/teams", async (req: Request, res: Response) => {
     // const managerId = req.user.id
     const managerId = req.query.managerId as string | undefined // Assuming managerId is passed as a query parameter
     const result = await getTeams(managerId)
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: "Failed to get teams", details: err })
+    sendOk(res, result)
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
     // next(err)
   }
 })
@@ -83,9 +87,10 @@ router.get("/team-members", async (req: Request, res: Response) => {
       managerId,
       teamId: teamId as string | undefined,
     })
-    res.json(result)
-  } catch (err) {
-    res.status(500).json({ error: "Failed to get team members", details: err })
+    sendOk(res, result)
+  } catch (error) {
+    const err = error as Error
+    sendUnexpected(res, err)
     // next(err)
   }
 })

@@ -1,6 +1,6 @@
 import { z } from "zod"
 // import { UserRole } from "../generated/prisma/index.js"
-import { USER_ROLES } from "../shared/types"
+import { USER_ROLES } from "../types/types"
 
 export const registerUserSchema = z.object({
   id: z.string().min(1, "User ID is required"),
