@@ -16,10 +16,28 @@ function Navbar() {
     <nav className="space-x-4 bg-custom-gray p-4">
       {isLoggedIn && (
         <>
-          <button onClick={() => navigate("dashboard")}>Dashboard</button>
-          <button onClick={() => navigate("log")}>Log Hours</button>
-          <button onClick={() => navigate("manager")}>Manager Dashboard</button>
-          <button onClick={() => navigate("admin")}>
+          <button
+            className="bg-custom-black text-custom-white"
+            onClick={() => navigate("dashboard")}
+          >
+            Dashboard
+          </button>
+          <button
+            className="bg-custom-black text-custom-white"
+            onClick={() => navigate("log")}
+          >
+            Log Hours
+          </button>
+          <button
+            className="bg-custom-black text-custom-white"
+            onClick={() => navigate("manager")}
+          >
+            Manager Dashboard
+          </button>
+          <button
+            className="bg-custom-black text-custom-white"
+            onClick={() => navigate("admin")}
+          >
             Administrator Dashboard
           </button>
           <button
