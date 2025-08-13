@@ -1,6 +1,12 @@
 import { createContext } from "react"
 
-export type Page = "login" | "dashboard" | "log" | "manager" | "admin"
+export type Page =
+  | "login"
+  | "dashboard"
+  | "log"
+  | "manager"
+  | "admin"
+  | "changePassword"
 
 type NavContextType = {
   page: Page

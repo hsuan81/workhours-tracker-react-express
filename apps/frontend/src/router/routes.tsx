@@ -5,6 +5,7 @@ import LogHoursPage from "../pages/LogHoursPage"
 import ManagerDashboard from "../pages/ManagerDashboard"
 import AdminDashboard from "../pages/AdminDashboard"
 import type { Page } from "./NavContext"
+import { ChangePassword } from "../components/ChangePassword"
 
 export const routes: Record<Page, JSX.Element> = {
   login: <LoginPage />,
@@ -12,4 +13,5 @@ export const routes: Record<Page, JSX.Element> = {
   log: <LogHoursPage />,
   manager: <ManagerDashboard />,
   admin: <AdminDashboard />,
+  changePassword: <ChangePassword />,
 }

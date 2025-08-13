@@ -1,9 +1,11 @@
 // src/pages/Dashboard.tsx
 import { TodaySummaryCard } from "../components/TodaySummaryCard"
 import { MonthlyOverviewCard } from "../components/MonthlyOverviewCard"
+import { useNavigate } from "../router/navHooks"
 
 export default function EmployeeDashboard() {
   const user = { id: "user1", name: "John Doe" }
+  const navigate = useNavigate()
 
   return (
     <div className="bg-custom-gray p-6 w-full min-h-screen">
@@ -27,6 +29,14 @@ export default function EmployeeDashboard() {
           <li>Monthly overtime: 28/46 hours (approaching limit)</li>
         </ul>
       </div> */}
+      <div className="mt-4">
+        <button
+          className="bg-custom-blue text-custom-white"
+          onClick={() => navigate("changePassword")}
+        >
+          Change Password
+        </button>
+      </div>
     </div>
   )
 }
