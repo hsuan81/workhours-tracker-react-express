@@ -1,5 +1,5 @@
 // apps/frontend/src/api/timeEntry.ts
-import { apiGet, apiPost } from "../utils/api"
+import { apiGet, apiPost, type ApiResult } from "../utils/api"
 
 export interface ProjectHours {
   name: string
@@ -37,7 +37,7 @@ export async function fetchMonthlyOverview(
   userId: string,
   year?: number,
   month?: number
-): Promise<MonthlyOverview> {
+): Promise<ApiResult<MonthlyOverview>> {
   const params = new URLSearchParams({ userId })
   if (year) params.append("year", year.toString())
   if (month) params.append("month", month.toString())
@@ -65,7 +65,7 @@ export interface TimeEntryWithStatus extends TimeEntryInput {
 
 export async function logTimeEntries(
   entries: TimeEntryInput[]
-): Promise<TimeEntryResponse> {
+): Promise<ApiResult<TimeEntryResponse>> {
   return await apiPost<TimeEntryResponse, TimeEntryInput[]>(
     "/time-entries/",
     entries
@@ -75,13 +75,13 @@ export async function logTimeEntries(
 export async function fetchTimeEntriesByUser(
   userId: string,
   date?: string
-): Promise<TimeEntryWithStatus[]> {
+): Promise<ApiResult<TimeEntryInput[]>> {
   // const params = new URLSearchParams({ userId })
   const params = date ? new URLSearchParams({ date }) : new URLSearchParams()
-  const entries = await apiGet<TimeEntryInput[]>(
+  return await apiGet<TimeEntryInput[]>(
     `/time-entries/${userId}?${params.toString()}`
   )
-  return entries.map((e) => ({ ...e, status: "unchanged" }))
+  // return entries.map((e) => ({ ...e, status: "unchanged" }))
 }
 
 export interface Project {
@@ -89,11 +89,13 @@ export interface Project {
   name: string
 }
 
-export async function fetchActiveProjects(): Promise<Project[]> {
+export async function fetchActiveProjects(): Promise<ApiResult<Project[]>> {
   return await apiGet<Project[]>("/projects/")
 }
 
-export async function fetchProjectById(projectId: string): Promise<Project> {
+export async function fetchProjectById(
+  projectId: string
+): Promise<ApiResult<Project>> {
   const params = new URLSearchParams({ projectId })
   return await apiGet<Project>(`/projects/${params.toString()}`)
 }

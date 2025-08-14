@@ -1,5 +1,5 @@
 // apps/frontend/src/api/manager.ts
-import { apiGet } from "../utils/api"
+import { apiGet, type ApiResult } from "../utils/api"
 
 export interface Team {
   id: string
@@ -11,28 +11,28 @@ export interface TeamOverview extends Team {
   members: OvertimeMemberEntry[]
 }
 
-export async function fetchTeams(userId: string): Promise<Team[]> {
+export async function fetchTeams(userId: string): Promise<ApiResult<Team[]>> {
   const params = new URLSearchParams({ userId })
   return await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
 }
 
-export async function fetchAllTeams(): Promise<Team[]> {
+export async function fetchAllTeams(): Promise<ApiResult<Team[]>> {
   return await apiGet<Team[]>("/manager/teams")
 }
 
-export async function fetchTeamOverviews(
-  userId: string,
-  teamId?: string
-): Promise<TeamOverview[]> {
-  const params = new URLSearchParams({ userId })
-  if (teamId) params.append("teamId", teamId)
-  const teams = await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
-  return teams.map((team) => ({
-    ...team,
-    summary: undefined, // Will be filled later
-    members: [],
-  }))
-}
+// export async function fetchTeamOverviews(
+//   userId: string,
+//   teamId?: string
+// ): Promise<ApiResult<TeamOverview[]>> {
+//   const params = new URLSearchParams({ userId })
+//   if (teamId) params.append("teamId", teamId)
+//   const teams = await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
+//   return teams.map((team) => ({
+//     ...team,
+//     summary: undefined, // Will be filled later
+//     members: [],
+//   }))
+// }
 
 export interface TeamMember {
   id: string
@@ -60,7 +60,7 @@ export async function fetchTeamSummaries(
   managerId: string,
   month?: string,
   teamId?: string
-): Promise<TeamSummary[]> {
+): Promise<ApiResult<TeamSummary[]>> {
   const params = new URLSearchParams({ managerId })
   if (month) params.append("month", month)
   if (teamId) params.append("teamId", teamId)
@@ -93,7 +93,7 @@ export async function fetchTeamEntries(
   managerId: string,
   month?: string,
   teamId?: string
-): Promise<TeamEntry[]> {
+): Promise<ApiResult<TeamEntry[]>> {
   const params = new URLSearchParams({ managerId })
   if (month) params.append("month", month)
   if (teamId) params.append("teamId", teamId)
