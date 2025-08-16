@@ -41,7 +41,7 @@ async function apiRequest<T>(
   }
 
   if (res.ok) {
-    return { ok: true, data: (body as T) ?? ({} as T) }
+    return { ok: true, data: (body.data as T) ?? ({} as T) }
   }
 
   // if (!res.ok) {
