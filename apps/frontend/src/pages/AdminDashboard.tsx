@@ -84,7 +84,8 @@ export default function AdminDashboard(): JSX.Element {
   useEffect(() => {
     const getSelectedUserData = async () => {
       if (selectedUserId) {
-        fetchUserById(selectedUserId).then(setUserData)
+        const userRes = await fetchUserById(selectedUserId)
+        if (userRes.ok) setUserData(userRes.data)
       }
     }
     getSelectedUserData()
@@ -93,10 +94,12 @@ export default function AdminDashboard(): JSX.Element {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await Promise.all([
-          fetchAllUserNames().then(setUserList),
-          fetchAllTeams().then(setTeamList),
+        const [allUserNameRes, allTeamsRes] = await Promise.all([
+          fetchAllUserNames(),
+          fetchAllTeams(),
         ])
+        if (allUserNameRes.ok) setUserList(allUserNameRes.data)
+        if (allTeamsRes.ok) setTeamList(allTeamsRes.data)
       } finally {
         setIsLoading(false)
       }
@@ -142,7 +145,7 @@ export default function AdminDashboard(): JSX.Element {
         )}
 
         {activeTab === "update" && !isLoading && (
-          <div className="space-y-4 bg-custom-white">
+          <div className="space-y-4">
             <UserSelector
               users={userList}
               selectedId={selectedUserId}

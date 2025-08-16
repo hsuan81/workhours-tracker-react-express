@@ -9,10 +9,10 @@ interface TeamTabProps {
 export function TeamTab({ team, isActive, onClick }: TeamTabProps) {
   return (
     <button
-      className={`px-4 py-2 rounded-t border-b-2 border-custom-black bg-custom-white text-custom-black text-sm font-medium ${
+      className={`px-4 py-2 rounded-xl text-custom-black text-sm font-medium ${
         isActive
-          ? "border-custom-black-500"
-          : "border-transparent text-gray-600"
+          ? "border-custom-black-500 bg-custom-white font-semibold"
+          : "border-transparent text-gray-600 bg-custom-gray"
       }`}
       onClick={() => onClick(team.id)}
     >

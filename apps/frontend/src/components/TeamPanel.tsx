@@ -27,14 +27,14 @@ export function TeamPanel({ team }: TeamPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-custom-white border rounded p-4">
+      <div className="bg-custom-white border rounded-xl p-4">
         <h2 className="text-lg font-semibold mb-2">Team: {team.name}</h2>
         <p>Total Overtime: {team.summary?.totalOvertime} hrs</p>
         <p>Avg Daily Overtime: {team.summary?.avgDailyOvertime} hrs</p>
         <p>Total OT Cost: ${team.summary?.totalOtCost}</p>
       </div>
 
-      <div className="bg-custom-white border rounded p-4">
+      <div className="bg-custom-white border rounded-xl p-4">
         <h3 className="font-semibold mb-2">Team Member Overview</h3>
         <table className="w-full text-sm text-custom-black border">
           <thead className="bg-gray-100">
@@ -58,7 +58,7 @@ export function TeamPanel({ team }: TeamPanelProps) {
         </table>
       </div>
 
-      <div className="bg-custom-white border rounded p-4">
+      <div className="bg-custom-white border rounded-xl p-4">
         <h3 className="text-center font-semibold mb-2">
           Overtime Comparison (unit: hours)
         </h3>

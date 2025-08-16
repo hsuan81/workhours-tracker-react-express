@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react"
+import type { ApiResult } from "../utils/api"
 import type { TeamOverview, TeamSummary, TeamEntry } from "../api/manager"
 import {
-  fetchTeamOverviews,
+  fetchTeams,
   fetchTeamSummaries,
   fetchTeamEntries,
 } from "../api/manager"
@@ -107,14 +108,21 @@ export default function ManagerDashboard() {
 
   useEffect(() => {
     const getTeams = async () => {
-      const res = await fetchTeamOverviews(userId)
-      setTeams(res)
-      setActiveTeamId(res[0]?.id ?? null)
+      const res = await fetchTeams(userId)
+      if (res.ok) {
+        const teamOverviews = res.data.map((team) => ({
+          ...team,
+          summary: undefined,
+          members: [],
+        }))
+        setTeams(teamOverviews)
+        setActiveTeamId(res.data[0]?.id ?? null)
+      }
     }
     getTeams()
   }, [])
 
-  console.log("Teams state:", teams)
+  // console.log("Teams state:", teams)
 
   useEffect(() => {
     const getTeamData = async () => {
@@ -122,11 +130,13 @@ export default function ManagerDashboard() {
 
       const month = "2025-07" // or dynamically calculate
 
-      const [summaryRes, entriesRes]: [TeamSummary[], TeamEntry[]] =
-        await Promise.all([
-          fetchTeamSummaries(userId, month, activeTeamId),
-          fetchTeamEntries(userId, month, activeTeamId),
-        ])
+      const [summaryRes, entriesRes]: [
+        ApiResult<TeamSummary[]>,
+        ApiResult<TeamEntry[]>
+      ] = await Promise.all([
+        fetchTeamSummaries(userId, month, activeTeamId),
+        fetchTeamEntries(userId, month, activeTeamId),
+      ])
 
       console.log("Fetched summary:", summaryRes)
       console.log("Fetched entries:", entriesRes)
@@ -135,8 +145,8 @@ export default function ManagerDashboard() {
         if (team.id === activeTeamId) {
           return {
             ...team,
-            summary: summaryRes[0],
-            members: entriesRes[0]?.members || [],
+            summary: summaryRes.ok ? summaryRes.data[0] : undefined,
+            members: entriesRes.ok ? entriesRes.data[0].members : [],
           }
         }
         return team

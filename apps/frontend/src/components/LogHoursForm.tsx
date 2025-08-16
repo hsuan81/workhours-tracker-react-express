@@ -29,11 +29,15 @@ export default function LogHoursForm() {
   useEffect(() => {
     const getActiveProjects = async () => {
       const activeProjects = await fetchActiveProjects()
-      setAllProjects(activeProjects)
+      if (activeProjects.ok) {
+        setAllProjects(activeProjects.data)
+      }
     }
     const getUserById = async () => {
       const fetchedUser = await fetchUserById(userId)
-      setUser(fetchedUser)
+      if (fetchedUser.ok) {
+        setUser(fetchedUser.data)
+      }
       setIsLoading(false)
     }
     getActiveProjects()
@@ -42,28 +46,15 @@ export default function LogHoursForm() {
 
   useEffect(() => {
     async function getSavedEntries() {
-      // const saved = await Promise.resolve<TimeEntry[]>([
-      //   {
-      //     id: "1",
-      //     projectId: "projA",
-      //     projectName: "Project A",
-      //     date,
-      //     hours: 3.5,
-      //     status: "unchanged",
-      //   },
-      //   {
-      //     id: "2",
-      //     projectId: "projB",
-      //     projectName: "Project B",
-      //     date,
-      //     hours: 4,
-      //     status: "unchanged",
-      //   },
-      // ])
       const saved = await fetchTimeEntriesByUser(userId, date)
-
-      setEntries(saved)
-      setInitialEntries(saved)
+      if (saved.ok) {
+        const statusAdded = saved.data.map((e) => ({
+          ...e,
+          status: "unchanged" as const,
+        }))
+        setEntries(statusAdded)
+        setInitialEntries(statusAdded)
+      }
     }
     getSavedEntries()
   }, [date])
@@ -91,16 +82,6 @@ export default function LogHoursForm() {
   }
 
   const handleProjectChange = (index: number, projectId: string) => {
-    // const project = allProjects.find((p) => p.id === projectId)
-    // if (!project) return
-    // setEntries((prev) => {
-    //   const updated = [...prev]
-    //   updated[index].projectId = project.id
-    //   // updated[index].projectName = project.name
-    //   updated[index].status =
-    //     updated[index].status === "unchanged" ? "edited" : updated[index].status
-    //   return updated
-    // })
     const project = allProjects.find((p) => p.id === projectId)
     if (!project) return
 
@@ -136,26 +117,9 @@ export default function LogHoursForm() {
             : entry // Keep existing object unchanged
       )
     })
-    // setEntries((prev) => {
-    //   const updated = [...prev]
-    //   updated[index].hours = value
-    //   if (updated[index].status === "unchanged") {
-    //     updated[index].status = "edited"
-    //   }
-    //   return updated
-    // })
   }
 
   const handleDelete = (index: number) => {
-    // setEntries((prev) => {
-    //   const updated = [...prev]
-    //   if (updated[index].status === "new") {
-    //     updated.splice(index, 1)
-    //   } else {
-    //     updated[index].status = "deleted"
-    //   }
-    //   return updated
-    // })
     setEntries((prev) => {
       const entryToDelete = prev[index]
 
@@ -183,15 +147,17 @@ export default function LogHoursForm() {
         .map((e) => ({ id: e.id }))
       console.log({ created, updated, deleted })
       // Send to backend
-      await logTimeEntries(entries)
-      setInitialEntries(entries)
-      setModalStatus("success")
-      setModalMessage("Successfully saved!")
-      // Auto-close modal after 2 seconds on success
-      setTimeout(() => setShowModal(false), 2000)
+      const response = await logTimeEntries(entries)
+      if (response.ok) {
+        setInitialEntries(entries)
+        setModalStatus("success")
+        setModalMessage("Successfully saved!")
+        // Auto-close modal after 2 seconds on success
+        setTimeout(() => setShowModal(false), 2000)
+      }
     } catch (error) {
       setModalStatus("error")
-      setModalMessage(`Something went wrong. Error:${error}`)
+      setModalMessage(`Something went wrong.\n Error:${error}`)
     } finally {
       setShowModal(true)
     }
@@ -217,7 +183,7 @@ export default function LogHoursForm() {
   )
 
   return (
-    <div className="p-6 max-w-2xl mx-auto border bg-custom-white text-custom-black rounded shadow">
+    <div className="p-6 max-w-2xl mx-auto border bg-custom-white text-custom-black rounded-xl shadow">
       <h2 className="text-lg text-center text-custom-black font-semibold mb-4">
         Log Hours for {date}
       </h2>
@@ -271,16 +237,6 @@ export default function LogHoursForm() {
           </button>
         </div>
       </div>
-
-      {/* <div className="mb-2 text-custom-black">
-        <p className="font-semibold">Daily Summary:</p>
-        <ul className="list-disc ml-6">
-          <li>Total Hours: {total.toFixed(1)}</li>
-          <li>Regular Hours: {regular.toFixed(1)}</li>
-          <li>Overtime Hours: {overtime.toFixed(1)}</li>
-          <li>Overtime Pay: ${otPay.toFixed(2)} (Rate: $25 × 1.33/hr)</li>
-        </ul>
-      </div> */}
       <div>
         {isLoading || !user?.hourlyRate ? (
           <div>Loading overtime calculations...</div>

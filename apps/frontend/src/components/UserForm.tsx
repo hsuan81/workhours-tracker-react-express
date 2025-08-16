@@ -116,14 +116,16 @@ export function UserForm(props: UserFormProps): JSX.Element {
   return (
     <form
       onSubmit={handleSubmit(onFormSubmit)}
-      className="space-y-3 border p-4 bg-custom-white text-custom-black rounded"
+      className="bg-custom-white p-4 text-custom-black rounded-xl"
     >
       <div>
         <label className="block mb-2 font-semibold">User ID</label>
         <input
           placeholder="KK12345A"
           {...register("id")}
-          className="border p-1 w-full"
+          className={`border p-1 w-full ${
+            type === "update" ? "text-gray-500" : "text-custom-black"
+          }`}
           disabled={type === "update"}
         />
         {errors.id && (
@@ -248,7 +250,7 @@ export function UserForm(props: UserFormProps): JSX.Element {
 
       <button
         type="submit"
-        className="bg-custom-blue text-white px-4 py-1 rounded"
+        className="bg-custom-blue text-white px-4 py-1 mt-4 rounded"
       >
         {type === "register" ? "Register User" : "Update User"}
       </button>

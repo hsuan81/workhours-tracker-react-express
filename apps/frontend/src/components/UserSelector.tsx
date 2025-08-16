@@ -21,7 +21,7 @@ export function UserSelector({
     <select
       value={selectedId}
       onChange={handleChange}
-      className="border p-1 w-full bg-custom-white text-custom-black"
+      className="border p-1 mb-4 w-full bg-custom-white text-custom-black"
     >
       <option value="">-- Select a user --</option>
       {users.map((u) => (
