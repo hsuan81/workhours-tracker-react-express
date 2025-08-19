@@ -2,8 +2,9 @@
 import { useEffect, useState } from "react"
 import { type MonthlyOverview, fetchMonthlyOverview } from "../api/timeEntry"
 import { getMonthName } from "../utils/calendar"
+import type { User } from "../types/types"
 
-export function MonthlyOverviewCard() {
+export function MonthlyOverviewCard({ user }: { user: User }) {
   const [overview, setOverview] = useState<MonthlyOverview | null>(null)
   // const [loading, setLoading] = useState(true)
   const month = new Date().getMonth() + 1 // 1-12
@@ -11,7 +12,7 @@ export function MonthlyOverviewCard() {
   useEffect(() => {
     const getOverview = async () => {
       const overviewRes = await fetchMonthlyOverview(
-        "user1",
+        user.id,
         new Date().getFullYear(),
         month
       )

@@ -1,6 +1,5 @@
 import React, { useState } from "react"
-// import { useNavigate } from "react-router-dom"
-import { useNavigate } from "../router/navHooks"
+import { useNavigate } from "react-router-dom"
 import { changePassword } from "../api/users"
 
 interface FormErrors {
@@ -103,7 +102,7 @@ export function ChangePassword() {
 
         // Navigate to account page after success
         setTimeout(() => {
-          navigate("dashboard")
+          navigate("/dashboard")
         }, 2000)
       } else {
         setMessage({
@@ -212,7 +211,7 @@ export function ChangePassword() {
           <button
             type="button"
             className="bg-transparent cursor-pointer border-0 text-sm no-underline text-custom-blue hover:underline hover:text-custom-blue"
-            onClick={() => navigate("dashboard")}
+            onClick={() => navigate("/dashboard")}
           >
             ← Back to Dashboard
           </button>

@@ -1,6 +1,6 @@
 // apps/frontend/src/api/users.ts
-import { apiPost, apiPut, apiGet } from "../utils/api"
-import type { UserRole } from "../../../../shared/types"
+import { apiPost, apiPut, apiGet, type ApiResult } from "../utils/api"
+import type { UserRole } from "../types/types"
 
 // export type UserRole = "EMPLOYEE" | "ADMINISTRATOR" | "MANAGER"
 
@@ -32,7 +32,7 @@ export type UserName = Pick<UserResponse, "id" | "firstName" | "lastName">
 
 export async function registerUser(
   data: RegisterUserInput
-): Promise<UserResponse> {
+): Promise<ApiResult<UserResponse>> {
   return await apiPost<UserResponse, RegisterUserInput>("/users/register", data)
 }
 
@@ -49,17 +49,35 @@ export interface UpdateUserInput {
 export async function updateUser(
   id: string,
   data: Partial<UpdateUserInput>
-): Promise<UserResponse> {
+): Promise<ApiResult<UserResponse>> {
   return await apiPut<UserResponse, Partial<UpdateUserInput>>(
     `/users/${id}`,
     data
   )
 }
 
-export async function fetchUserById(userId: string): Promise<UserResponse> {
+export async function fetchUserById(
+  userId: string
+): Promise<ApiResult<UserResponse>> {
   return await apiGet<UserResponse>(`/users/${userId}`)
 }
 
-export async function fetchAllUserNames(): Promise<UserName[]> {
+export async function fetchAllUserNames(): Promise<ApiResult<UserName[]>> {
   return await apiGet<UserResponse[]>("/users")
+}
+
+interface ChangePasswordInput {
+  currentPassword: string
+  newPassword: string
+}
+
+interface ChangePasswordResponse {
+  success: boolean
+  message: string
+}
+
+export async function changePassword(
+  passwordInput: ChangePasswordInput
+): Promise<ApiResult<ChangePasswordResponse>> {
+  return await apiPost<ChangePasswordResponse>("/users/password", passwordInput)
 }

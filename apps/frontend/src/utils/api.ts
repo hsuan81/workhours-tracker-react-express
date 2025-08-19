@@ -36,6 +36,7 @@ async function apiRequest<T>(
   let body = null
   try {
     body = res.status !== 204 ? await res.json() : null
+    console.log("Request response: ", body)
   } catch (e) {
     console.error("JSON parse error", { path, status: res.status, e })
   }

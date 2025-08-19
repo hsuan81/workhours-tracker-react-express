@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { loginUser } from "../api/auth"
-import { useNavigate } from "../router/navHooks"
+// import { useNavigate } from "react-router-dom"
 import type { UnexpectedError } from "../utils/api"
 
 /**
@@ -24,23 +24,11 @@ interface FormErrors {
   password?: string
 }
 
-// interface LoginResponse {
-//   message?: string
-//   user?: {
-//     id: string
-//     email: string
-//     firstName?: string
-//     lastName?: string
-//     role: string
-//   }
-//   sessionId?: string
-// }
+interface LoginPageProps {
+  onLoginSuccess: () => void // Required callback
+}
 
-// interface LoginProps {
-//   redirect: (pagePath: string) => void
-// }
-
-const LoginPage: React.FC = () => {
+const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState<FormData>({
     email: "",
     password: "",
@@ -48,7 +36,7 @@ const LoginPage: React.FC = () => {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState<boolean>(false)
   const [message, setMessage] = useState<string>("")
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
   // Basic email validation regex
   const emailRegex: RegExp = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -160,7 +148,18 @@ const LoginPage: React.FC = () => {
       //   // Example: Redirect to dashboard after successful login
       //   // window.location.href = "/dashboard"
       //   // redirect("dashboard")
-      navigate("dashboard")
+      // navigate("/dashboard")
+      // ONLY communicate success - don't navigate
+      // await onLoginSuccess() // Let parent handle what happens next
+
+      console.log("About to call onLoginSuccess")
+
+      // Make sure you're calling this and NOT navigate()
+      if (onLoginSuccess) {
+        onLoginSuccess()
+      } else {
+        console.log("onLoginSuccess is undefined!")
+      }
 
       //   // Example: Update global authentication state
       //   // setAuthenticatedUser(data.user);

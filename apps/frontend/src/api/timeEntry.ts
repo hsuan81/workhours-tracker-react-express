@@ -15,7 +15,10 @@ export interface DailySummary {
   projects: ProjectHours[]
 }
 
-export async function fetchTodaySummary(userId: string, date?: string) {
+export async function fetchTodaySummary(
+  userId: string,
+  date?: string
+): Promise<ApiResult<DailySummary>> {
   const params = new URLSearchParams({ userId })
   if (date) params.append("date", date)
   return await apiGet<DailySummary>(

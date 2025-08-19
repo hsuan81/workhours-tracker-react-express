@@ -1,6 +1,6 @@
 // src/types/api.ts
-import type { UpdateUserInput } from "./api/users"
-import type { UserRole } from "shared/types"
+import type { UpdateUserInput } from "../api/users"
+import type { UserRole } from "apps/frontend/src/types/types"
 
 export interface ProjectSummary {
   id: string

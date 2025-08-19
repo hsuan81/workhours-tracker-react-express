@@ -8,8 +8,9 @@ import {
   type TimeEntryWithStatus,
 } from "../api/timeEntry"
 import { fetchUserById, type UserResponse } from "../api/users"
+import type { User } from "../types/types"
 
-export default function LogHoursForm() {
+export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
   const today = new Date().toISOString().slice(0, 10)
   const [date, setDate] = useState(today)
   const [entries, setEntries] = useState<TimeEntryWithStatus[]>([])
@@ -24,7 +25,7 @@ export default function LogHoursForm() {
   const [modalStatus, setModalStatus] = useState("loading")
   const [modalMessage, setModalMessage] = useState("")
 
-  const userId = "user1"
+  const userId = loggedUser.id
 
   useEffect(() => {
     const getActiveProjects = async () => {

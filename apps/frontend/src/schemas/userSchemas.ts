@@ -1,6 +1,6 @@
 // frontend/src/schemas/userSchemas.ts
 import { z } from "zod"
-import { USER_ROLES } from "../../../../shared/types"
+import { USER_ROLES } from "../types/types"
 
 export const userFormSchema = z
   .object({

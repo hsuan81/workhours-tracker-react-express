@@ -1,10 +1,10 @@
 // apps/frontend/src/components/TodaySummaryCard.tsx
 import { useEffect, useState } from "react"
 import { type DailySummary, fetchTodaySummary } from "../api/timeEntry"
+import { type User } from "../types/types"
 
-export function TodaySummaryCard() {
+export function TodaySummaryCard({ user }: { user: User }) {
   const todayString = new Date().toISOString().split("T")[0]
-  console.log(todayString)
   const [summary, setSummary] = useState<DailySummary>({
     date: todayString,
     totalHours: 0,
@@ -14,7 +14,7 @@ export function TodaySummaryCard() {
     projects: [],
   })
   const [showData, setShowData] = useState(false)
-  const userId = "user1"
+  const userId = user.id
 
   useEffect(() => {
     const getTodaySummary = async () => {

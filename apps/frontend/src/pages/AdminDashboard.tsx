@@ -11,7 +11,7 @@ import type {
   UserName,
   UpdateUserInput,
 } from "../api/users"
-import type { UpdateUserInputWithId } from "../types"
+import type { UpdateUserInputWithId } from "../types/api"
 import { type Team, fetchAllTeams } from "../api/manager"
 import { UserForm } from "../components/UserForm"
 import { UserSelector } from "../components/UserSelector"
@@ -28,8 +28,6 @@ export default function AdminDashboard(): JSX.Element {
     "loading" | "success" | "error"
   >()
   const [modalMessage, setModalMessage] = useState("")
-
-  // const userId = "user2"
 
   async function handleRegister(data: RegisterUserInput) {
     setModalStatus("loading")
