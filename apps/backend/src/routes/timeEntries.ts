@@ -1,7 +1,7 @@
 // src/routes/entries.ts
 import express, { Request, Response } from "express"
 import { PrismaClient, Prisma } from "../generated/prisma/index.js"
-import { TimeEntry } from "shared/types"
+import { TimeEntry } from "../types/types"
 import { fetchTimeEntriesByUser } from "../services/timeEntriesService.js"
 import {
   ApiErrorCode,
@@ -9,6 +9,8 @@ import {
   sendOk,
   sendUnexpected,
 } from "../utils/http.js"
+import { toISODate } from "../utils/calendarUtils.js"
+import { syncOvertimeSummary } from "../utils/overtime.js"
 
 const router = express.Router()
 
@@ -16,8 +18,17 @@ const prisma = new PrismaClient()
 
 const OVERTIME_LIMIT = 46 // Legal limit for overtime hours in a month
 
+// Create or update time entries
 router.post("/", async (req: Request, res: Response) => {
+  console.log("Api: /timeEntries POST", req.body)
+  if (!req.body || req.body.length == 0) {
+    console.warn("No time entries provided")
+    sendOk(res, { updated: [], created: [] })
+    return
+  }
   const entries = req.body as TimeEntry[]
+  const userId = req.session.user!.userId!
+  const dataDate = new Date(entries[0].date)
 
   const toCreate = entries
     .filter((e) => !e.id)
@@ -28,7 +39,7 @@ router.post("/", async (req: Request, res: Response) => {
       hours: new Prisma.Decimal(e.hours.toFixed(2)),
     }))
   const toUpdate = entries.filter((e) => e.id)
-  const toUpdateSet = new Set(toUpdate.map((e) => e.id!))
+  const toUpdateIdSet = new Set(toUpdate.map((e) => e.id!))
 
   // Check if update targets exist
   const existingIds = await prisma.timeEntry.findMany({
@@ -38,10 +49,11 @@ router.post("/", async (req: Request, res: Response) => {
   const existingIdSet = new Set(existingIds.map((e) => e.id))
 
   const notFoundIds = new Set(
-    [...toUpdateSet].filter((id) => !existingIdSet.has(id))
+    [...toUpdateIdSet].filter((id) => !existingIdSet.has(id))
   )
 
   if (notFoundIds.size > 0) {
+    console.warn("Time entry IDs not found for update:", notFoundIds)
     sendFail(
       res,
       "NOT_FOUND",
@@ -50,15 +62,29 @@ router.post("/", async (req: Request, res: Response) => {
     return
   }
 
+  // Check deleted target
+  const toDeletedIdSet: Set<string> = new Set()
+  for (const e of existingIdSet) {
+    if (!toUpdateIdSet.has(e)) {
+      toDeletedIdSet.add(e)
+    }
+  }
+
+  console.log("->toCreate", toCreate)
+  console.log("->toUpdate", toUpdate)
+  console.log("->toDeletedIdSet", toDeletedIdSet)
+
   const results = await prisma.$transaction(async (tx) => {
     const resultStats: {
       updated: TimeEntry[]
-      created: { id: string }[]
+      created: TimeEntry[]
+      deleted: TimeEntry[]
       code: ApiErrorCode | null
       error: string | null
     } = {
       updated: [],
       created: [],
+      deleted: [],
       code: null,
       error: null,
     }
@@ -66,9 +92,19 @@ router.post("/", async (req: Request, res: Response) => {
       const created = await tx.timeEntry.createManyAndReturn({
         data: toCreate,
         skipDuplicates: true,
-        select: { id: true, projectId: true, hours: true, date: true },
+        select: {
+          id: true,
+          userId: true,
+          projectId: true,
+          hours: true,
+          date: true,
+        },
       })
-      resultStats.created = created
+      resultStats.created = created.map((e) => ({
+        ...e,
+        hours: e.hours.toNumber(),
+        date: toISODate(e.date),
+      }))
 
       for (const entry of toUpdate) {
         const updated = await tx.timeEntry.update({
@@ -85,10 +121,31 @@ router.post("/", async (req: Request, res: Response) => {
           id: updated.id,
           userId: updated.userId,
           projectId: updated.projectId,
-          date: updated.date.toISOString().split("T")[0],
+          date: toISODate(updated.date),
           hours: updated.hours.toNumber(),
         })
       }
+
+      for (const d of toDeletedIdSet) {
+        const deleted = await tx.timeEntry.delete({
+          where: { id: d },
+        })
+        resultStats.deleted.push({
+          id: deleted.id,
+          userId: deleted.userId,
+          projectId: deleted.projectId,
+          date: toISODate(deleted.date),
+          hours: deleted.hours.toNumber(),
+        })
+      }
+
+      console.log("->updating daily overtime")
+      await syncOvertimeSummary(tx, userId, dataDate)
+
+      const test = await tx.timeEntry.findMany({
+        where: { userId, date: dataDate },
+        select: { hours: true },
+      })
     } catch (error) {
       // Simple error handling
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -109,28 +166,38 @@ router.post("/", async (req: Request, res: Response) => {
             resultStats.code = "DATABASE_ERROR"
             resultStats.error = `Database error: ${error.message}`
         }
+        console.error("Database error:", error)
       } else {
         resultStats.code = "DATABASE_ERROR"
         resultStats.error = "An unexpected error occurred"
+        console.error("Unexpected error:", error)
       }
     } finally {
+      const after = await prisma.timeEntry.findMany({
+        where: { userId },
+        select: { hours: true },
+      })
       return resultStats
     }
   })
   if (results.error) {
     sendFail(res, results.code!, results.error)
   }
+  console.log("Api: /timeEntries POST - finished", results)
 
   sendOk(res, { updated: results.updated, created: results.created })
 })
 
+// Get time entries summary for a specific user and date
 router.get("/summary", async (req: Request, res: Response) => {
+  console.log("Api: /timeEntries/summary GET", req.query)
   try {
     const userId = req.query.userId as string // simulate login, for testing purposes
     const dateParam = req.query.date as string | undefined
 
     const date = dateParam ? new Date(dateParam) : new Date()
 
+    console.log("-> fetching data for userId:", userId, "date:", date)
     const entries = await prisma.timeEntry.findMany({
       where: {
         userId,
@@ -144,33 +211,43 @@ router.get("/summary", async (req: Request, res: Response) => {
       new Prisma.Decimal(0)
     )
     const totalHoursNumber = totalHours.toNumber()
-    const regularHoursNumber = Math.min(totalHoursNumber, 8)
+    const regularHoursNumber = totalHours
+      ? Math.min(totalHoursNumber, 8.0)
+      : 0.0
 
     const overtimeRecord = await prisma.dailyOvertime.findFirst({
       where: { userId, date },
       select: { overtimeHours: true, overtimePay: true },
     })
 
+    console.log("Api: /timeEntries/summary GET - finished")
+
     sendOk(res, {
-      date: date.toISOString().split("T")[0],
-      totalHours,
-      regularHours: regularHoursNumber,
+      date: toISODate(date),
+      totalHours: totalHoursNumber ?? 0.0,
+      regularHours: regularHoursNumber ?? 0.0,
       overtimeHours: overtimeRecord
         ? overtimeRecord.overtimeHours.toNumber()
-        : 0,
-      overtimePay: overtimeRecord ? overtimeRecord.overtimePay.toNumber() : 0,
-      projects: entries.map((e) => ({
-        name: e.project.name,
-        hours: e.hours,
-      })),
+        : 0.0,
+      overtimePay: overtimeRecord ? overtimeRecord.overtimePay.toNumber() : 0.0,
+      projects: entries
+        ? entries.map((e) => ({
+            name: e.project.name,
+            hours: e.hours,
+          }))
+        : [],
     })
   } catch (error) {
     const err = error as Error
+    console.error("Api: /timeEntries/summary GET - Error:", err)
     sendUnexpected(res, err)
   }
 })
 
+// Get monthly overview for a user for a specific month
 router.get("/monthly-overview", async (req: Request, res: Response) => {
+  console.log("Api: /timeEntries/monthly-overview GET", req.query)
+
   try {
     const userId = req.query.userId as string // simulate login, for testing purposes
     const month =
@@ -181,6 +258,14 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
     const startDate = new Date(year, month - 1, 1)
     const endDate = new Date(year, month, 0)
 
+    console.log(
+      "-> fetching data for userId:",
+      userId,
+      "month:",
+      month,
+      "year:",
+      year
+    )
     const dayEntries = await prisma.timeEntry.groupBy({
       by: ["date"],
       where: {
@@ -206,6 +291,7 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
       0
     )
 
+    console.log("-> fetching overtime data")
     // Calculate overtime hours and pay
     const { _sum } = await prisma.dailyOvertime.aggregate({
       _sum: {
@@ -221,6 +307,7 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
       },
     })
 
+    console.log("Api: /timeEntries/monthly-overview GET - finished")
     sendOk(res, {
       year,
       month,
@@ -232,21 +319,26 @@ router.get("/monthly-overview", async (req: Request, res: Response) => {
     })
   } catch (error) {
     const err = error as Error
+    console.error("Api: /timeEntries/monthly-overview GET - Error:", err)
     sendUnexpected(res, err)
   }
 })
 
+// Get time entries for a specific user and date
 router.get("/:userId", async (req: Request, res: Response) => {
+  console.log("Api: /timeEntries/:userId GET", req.params.userId, req.query)
   try {
     const userId = req.params.userId
     const dateParam = req.query.date as string | undefined
     const date = dateParam ? new Date(dateParam) : new Date()
-    const entries = await fetchTimeEntriesByUser(userId, date)
+
+    console.log("-> fetching data for userId:", userId, "date:", date)
+    const entries = (await fetchTimeEntriesByUser(userId, date)) ?? []
+    console.log("Api: /timeEntries/:userId GET - finished")
     sendOk(res, entries)
   } catch (error) {
-    console.error("Error fetching time entries:", error)
     const err = error as Error
-
+    console.error("Api: /timeEntries/:userId GET - Error:", err)
     sendUnexpected(res, err)
   }
 })

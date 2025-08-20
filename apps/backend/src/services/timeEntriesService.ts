@@ -12,10 +12,10 @@ export async function fetchTimeEntriesByUser(
     where: { userId, date },
   })
   return entries.map((entry) => ({
-    id: entry.id,
-    userId: entry.userId,
-    projectId: entry.projectId,
+    id: entry.id ?? "",
+    userId: entry.userId ?? "",
+    projectId: entry.projectId ?? "",
     date: toISODate(entry.date),
-    hours: parseFloat(entry.hours.toString()),
+    hours: parseFloat(entry.hours.toString()) ?? 0,
   }))
 }
