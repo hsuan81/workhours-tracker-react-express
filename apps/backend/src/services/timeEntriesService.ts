@@ -1,5 +1,5 @@
 import { PrismaClient } from "../generated/prisma/index.js"
-import { TimeEntry } from "shared/types.js"
+import { TimeEntry } from "../types/types.js"
 import { toISODate } from "../utils/calendarUtils.js"
 
 const prisma = new PrismaClient()
