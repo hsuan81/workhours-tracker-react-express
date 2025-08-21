@@ -2,6 +2,7 @@ import { Request, Response } from "express"
 import { PrismaClient } from "../generated/prisma/index.js"
 import { comparePasswords } from "../utils/passwordUtils"
 import { sendFail, sendOk, sendUnexpected } from "../utils/http"
+import { toISODate } from "../utils/calendarUtils.js"
 
 const prisma = new PrismaClient()
 
@@ -41,6 +42,7 @@ export async function loginController(
     req.session.user = {
       userId: user.id,
       role: user.role,
+      teamId: user.teamId,
       firstName: user.firstName,
       lastName: user.lastName,
       email: user.email,
@@ -103,6 +105,7 @@ export async function sessionCheckController(
     }
 
     req.session.user!.lastActivity = new Date().toISOString()
+    console.log("Session user:", req.session.user)
 
     // res.json({
     //   authenticated: true,
@@ -123,7 +126,7 @@ export async function sessionCheckController(
           email: req.session.user!.email,
           firstName: req.session.user!.firstName,
           lastName: req.session.user!.lastName,
-          roles: req.session.user!.role,
+          role: req.session.user!.role,
         },
       },
       "Authenticated"

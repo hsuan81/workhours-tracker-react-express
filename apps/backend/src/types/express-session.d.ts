@@ -1,4 +1,5 @@
 import "express-session"
+import { type UserRole } from "./types"
 
 declare module "express-session" {
   interface SessionUser {
@@ -6,7 +7,8 @@ declare module "express-session" {
     email: string
     firstName: string | null
     lastName: string | null
-    role: string
+    role: UserRole
+    teamId?: string
     changePassword: boolean
     sessionCreatedAt: string
     lastActivity: string
