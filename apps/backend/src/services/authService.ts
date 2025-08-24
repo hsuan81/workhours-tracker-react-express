@@ -27,14 +27,13 @@ export async function loginController(
       return
     }
 
+    // Mitigate timing attacks by always calling comparePasswords
     const user = await prisma.user.findUnique({ where: { email } })
-    if (!user || !(await comparePasswords(password, user.passwordHash))) {
+    const dummyHash = "$2b$12$dummy.hash.to.prevent.timing.attacks.here"
+    const hashToCheck = user?.passwordHash || dummyHash
+    const isValidPassword = await comparePasswords(password, hashToCheck)
+    if (!user || !isValidPassword || !user.isActive) {
       sendFail(res, "INVALID_CREDENTIALS", "Invalid credentials")
-      // res.status(401).json({
-      //   success: false,
-      //   code: "INVALID_CREDENTIALS",
-      //   message: "Invalid credentials",
-      // })
       return
     }
 
@@ -104,19 +103,11 @@ export async function sessionCheckController(
       sendFail(res, "SESSION_EXPIRED", "No active session")
     }
 
+    console.log("Session user before setting lastActivity:", req.session.user)
+
     req.session.user!.lastActivity = new Date().toISOString()
     console.log("Session user:", req.session.user)
 
-    // res.json({
-    //   authenticated: true,
-    //   user: {
-    //     id: req.session.user!.userId,
-    //     email: req.session.user!.email,
-    //     firstName: req.session.user!.firstName,
-    //     lastName: req.session.user!.lastName,
-    //     roles: req.session.user!.role,
-    //   },
-    // })
     sendOk(
       res,
       {
