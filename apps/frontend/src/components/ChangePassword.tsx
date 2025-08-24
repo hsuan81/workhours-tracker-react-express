@@ -1,6 +1,7 @@
 import React, { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { changePassword } from "../api/users"
+import type { User } from "../types/types"
 
 interface FormErrors {
   currentPassword?: string
@@ -9,7 +10,7 @@ interface FormErrors {
   [key: string]: string | undefined
 }
 
-export function ChangePassword() {
+export function ChangePassword({ user }: { user: User | null }) {
   const navigate = useNavigate()
   const [formData, setFormData] = useState({
     currentPassword: "",
@@ -19,6 +20,14 @@ export function ChangePassword() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [isLoading, setIsLoading] = useState(false)
   const [message, setMessage] = useState({ text: "", type: "" })
+
+  if (!user) {
+    return (
+      <div className="text-red-500">
+        You must be logged in to change your password.
+      </div>
+    )
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -102,7 +111,11 @@ export function ChangePassword() {
 
         // Navigate to account page after success
         setTimeout(() => {
-          navigate("/dashboard")
+          if (user.role === "ADMINISTRATOR") {
+            navigate("/admin")
+          } else {
+            navigate("/dashboard")
+          }
         }, 2000)
       } else {
         setMessage({
