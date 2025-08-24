@@ -8,8 +8,9 @@ import {
   changePassword,
 } from "../services/userService"
 import { registerUserSchema, updateUserSchema } from "../schemas/userSchemas"
-import { error } from "node:console"
+import { allow } from "../auth/auth"
 import { sendFail, sendOk, sendUnexpected } from "../utils/http"
+import { USER_ROLES } from "../types/types"
 // import { requireRole, secureRoute } from "../middleware/authMiddleware"
 
 const router = express.Router()
@@ -17,7 +18,7 @@ const router = express.Router()
 // POST /register (Admin only)
 router.post(
   "/register",
-  //   requireRole(["admin"]),
+  allow({ anyOf: ["ADMINISTRATOR"] }), // Only allow admin role to register users
   async (req: Request, res: Response): Promise<void> => {
     try {
       console.log("Registering user with data:", req.body)
@@ -84,20 +85,9 @@ router.post("/password", async (req: Request, res: Response): Promise<void> => {
   }
 })
 
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+router.get("/me", async (req: Request, res: Response): Promise<void> => {
   try {
-    const users = await getAllUsersName()
-    sendOk(res, users)
-  } catch (error) {
-    const err = error as Error
-    console.error("Error fetching users:", err)
-    sendUnexpected(res, err)
-  }
-})
-
-router.get("/:id", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const userId = req.params.id
+    const userId = req.session.user!.userId
     const user = await getUserById(userId)
     if (!user) {
       sendFail(res, "NOT_FOUND", "User not found")
@@ -112,19 +102,59 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
   }
 })
 
-// PUT /users/:id (Admin only)
-router.put("/:id", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const userId = req.params.id
-    const data = updateUserSchema.parse(req.body)
-    const updatedUser = await updateUser(userId, data)
-    sendOk(res, updatedUser)
-  } catch (error) {
-    const err = error as Error
-
-    console.error("Error updating user:", err)
-    sendUnexpected(res, err)
+router.get(
+  "/",
+  allow({ anyOf: ["ADMINISTRATOR"] }),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const users = await getAllUsersName()
+      sendOk(res, users)
+    } catch (error) {
+      const err = error as Error
+      console.error("Error fetching users:", err)
+      sendUnexpected(res, err)
+    }
   }
-})
+)
+
+router.get(
+  "/:id",
+  allow({ anyOf: ["MANAGER", "ADMINISTRATOR"] }),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.params.id
+      const user = await getUserById(userId)
+      if (!user) {
+        sendFail(res, "NOT_FOUND", "User not found")
+        return
+      }
+      // res.status(200).json(user)
+      sendOk(res, user)
+    } catch (error) {
+      const err = error as Error
+      console.error("Error fetching user:", err)
+      sendUnexpected(res, err)
+    }
+  }
+)
+
+// PUT /users/:id (Admin only)
+router.put(
+  "/:id",
+  allow({ anyOf: ["ADMINISTRATOR"] }),
+  async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.params.id
+      const data = updateUserSchema.parse(req.body)
+      const updatedUser = await updateUser(userId, data)
+      sendOk(res, updatedUser)
+    } catch (error) {
+      const err = error as Error
+
+      console.error("Error updating user:", err)
+      sendUnexpected(res, err)
+    }
+  }
+)
 
 export default router

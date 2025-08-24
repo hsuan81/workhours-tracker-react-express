@@ -1,3 +1,5 @@
+import { clearCsrfToken, getCsrfToken } from "./csrf"
+
 // src/utils/api.ts
 const BASE_URL =
   import.meta.env.VITE_API_URL + "/api" || "http://localhost:3000/api"
@@ -19,19 +21,45 @@ export interface UnexpectedError {
   err: Error
 }
 
+function isWrite(method?: string) {
+  const m = (method || "GET").toUpperCase()
+  return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE"
+}
+
 async function apiRequest<T>(
   path: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  allowRetry = true
 ): Promise<ApiResult<T>> {
   const normalizedPath = path.startsWith("/") ? path : `/${path}`
+  const method = (options.method || "GET").toUpperCase()
+  const url = `${BASE_URL}${normalizedPath}`
 
-  const res = await fetch(`${BASE_URL}${normalizedPath}`, {
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+  const headers: Headers = new Headers({
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  })
+
+  if (isWrite(method)) {
+    headers.append("x-csrf-token", await getCsrfToken())
+  }
+
+  let res = await fetch(url, {
+    credentials: "include",
+    headers,
     ...options,
   })
+
+  // If CSRF failed, drop cached token and retry once with a fresh one
+  if (res.status === 403 && allowRetry) {
+    clearCsrfToken()
+    const fresh = await getCsrfToken()
+    res = await fetch(url, {
+      credentials: "include",
+      ...options,
+      headers: { ...headers, "x-csrf-token": fresh },
+    })
+  }
 
   let body = null
   try {
@@ -77,7 +105,6 @@ export async function apiPost<T, U = unknown>(
   return apiRequest<T>(path, {
     method: "POST",
     body: JSON.stringify(body),
-    credentials: "include",
   })
 }
 
@@ -88,10 +115,9 @@ export async function apiPut<T, U = unknown>(
   return apiRequest<T>(path, {
     method: "PUT",
     body: JSON.stringify(body),
-    credentials: "include",
   })
 }
 
 export async function apiDelete<T>(path: string): Promise<ApiResult<T>> {
-  return apiRequest<T>(path, { method: "DELETE", credentials: "include" })
+  return apiRequest<T>(path, { method: "DELETE" })
 }

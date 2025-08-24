@@ -14,6 +14,7 @@ export type ApiErrorCode =
   | "DATABASE_ERROR"
   | "INVALID_QUERY"
   | "CONFLICT"
+  | "CSRF_FAILED"
 
 // One place to maintain all codes & statuses
 export const ApiErrorStatusMap: Record<ApiErrorCode, number> = {
@@ -25,6 +26,7 @@ export const ApiErrorStatusMap: Record<ApiErrorCode, number> = {
   RATE_LIMITED: 429, // Too Many Requests
   BAD_REQUEST: 400, // Bad Request (or change to 500 if server fault)
   INTERNAL_ERROR: 500, // Internal Server Error
+  CSRF_FAILED: 403, // CSRF token missing or invalid
   // Database related errors
   DATABASE_ERROR: 500, // A query failed unexpectedly due to server-side issues (e.g., connection failure, unhandled ORM error)
   INVALID_QUERY: 400, // The request parameters are invalid for the database operation (e.g., invalid column name, negative value where positive is required)

@@ -226,7 +226,9 @@ async function getTeamMembersWithEntries(
   const userIds = members.map((m) => m.id)
 
   // Get total hours and average daily hours for last 7 working days
-  const last7WorkdayData = await prisma.$queryRaw<Last7WorkdayData[]>`
+  const last7WorkdayData =
+    userIds.length > 0
+      ? await prisma.$queryRaw<Last7WorkdayData[]>`
   SELECT
     "userId",
     SUM("hours") AS "totalHours",
@@ -237,6 +239,7 @@ async function getTeamMembersWithEntries(
     AND "date" BETWEEN ${range.dayRangeStart} AND ${range.dayRangeEnd}
   GROUP BY "userId"
 `
+      : []
   // Monthly Overtime hours sum by user
   const monthlyOvertimeSumByUser = await prisma.dailyOvertime.groupBy({
     by: ["userId"],
