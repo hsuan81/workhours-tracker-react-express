@@ -56,6 +56,10 @@ export async function updateUser(
   )
 }
 
+export async function fetchLoggedInUser(): Promise<ApiResult<UserResponse>> {
+  return await apiGet<UserResponse>("/users/me")
+}
+
 export async function fetchUserById(
   userId: string
 ): Promise<ApiResult<UserResponse>> {
