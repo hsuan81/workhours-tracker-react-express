@@ -176,6 +176,7 @@ model TimeEntry {
   @@index([date])
   @@index([userId])
   @@index([projectId])
+  @@unique([userId, date, projectId])
 }
 
 model DailyOvertime {

@@ -7,7 +7,7 @@ import {
   type Project,
   type TimeEntryWithStatus,
 } from "../api/timeEntry"
-import { fetchUserById, type UserResponse } from "../api/users"
+import { fetchLoggedInUser, type UserResponse } from "../api/users"
 import type { User } from "../types/types"
 
 export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
@@ -35,14 +35,15 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
       }
     }
     const getUserById = async () => {
-      const fetchedUser = await fetchUserById(userId)
+      // const fetchedUser = await fetchUserById(userId)
+      const fetchedUser = await fetchLoggedInUser()
       if (fetchedUser.ok) {
         setUser(fetchedUser.data)
       }
-      setIsLoading(false)
     }
     getActiveProjects()
     getUserById()
+    setIsLoading(false)
   }, [])
 
   useEffect(() => {
@@ -148,9 +149,14 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
         .map((e) => ({ id: e.id }))
       console.log({ created, updated, deleted })
       // Send to backend
-      const response = await logTimeEntries(entries)
+      const entriesToSend = entries.filter((e) => e.status !== "unchanged")
+      const response = await logTimeEntries(entriesToSend)
+      const nweInitialEntries = entries
+        .filter((e) => e.status !== "deleted")
+        .map((e) => ({ ...e, status: "unchanged" as const }))
       if (response.ok) {
-        setInitialEntries(entries)
+        setEntries([...nweInitialEntries])
+        setInitialEntries(nweInitialEntries)
         setModalStatus("success")
         setModalMessage("Successfully saved!")
         // Auto-close modal after 2 seconds on success
