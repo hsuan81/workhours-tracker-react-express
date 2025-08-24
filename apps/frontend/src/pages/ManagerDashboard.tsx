@@ -14,6 +14,10 @@ export default function ManagerDashboard({ user }: { user: User }) {
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [activeTeamId, setActiveTeamId] = useState("")
   const userId = user.id
+  const year = new Date().getFullYear()
+  const month = new Date().getMonth()
+  const monthString = `${year}-${String(month + 1).padStart(2, "0")}`
+  console.log("User ID:", userId)
 
   //   const baseUrl = import.meta.env.VITE_API_URL
 
@@ -39,14 +43,12 @@ export default function ManagerDashboard({ user }: { user: User }) {
     const getTeamData = async () => {
       if (!activeTeamId) return
 
-      const month = "2025-07" // or dynamically calculate
-
       const [summaryRes, entriesRes]: [
         ApiResult<TeamSummary[]>,
         ApiResult<TeamEntry[]>
       ] = await Promise.all([
-        fetchTeamSummaries(userId, month, activeTeamId),
-        fetchTeamEntries(userId, month, activeTeamId),
+        fetchTeamSummaries(userId, monthString, activeTeamId),
+        fetchTeamEntries(userId, monthString, activeTeamId),
       ])
 
       console.log("Fetched summary:", summaryRes)
@@ -57,6 +59,9 @@ export default function ManagerDashboard({ user }: { user: User }) {
           return {
             ...team,
             summary: summaryRes.ok ? summaryRes.data[0] : undefined,
+            last7WorkdaysRange: entriesRes.ok
+              ? entriesRes.data[0].last7WorkdaysRange
+              : undefined,
             members: entriesRes.ok ? entriesRes.data[0].members : [],
           }
         }

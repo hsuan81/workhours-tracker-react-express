@@ -19,6 +19,8 @@ export function TeamPanel({ team }: TeamPanelProps) {
     return <div className="text-center text-gray-500">No team selected</div>
   }
   console.log("Rendering TeamPanel for team:", team)
+  const last7WorkdaysRangeString =
+    team.last7WorkdaysRange?.start + " ~ " + team.last7WorkdaysRange?.end
   const chartData = team.members.map((m) => ({
     name: `${m.firstName} ${m.lastName}`,
     monthlyOvertime: m.monthlyOvertime,
@@ -41,7 +43,9 @@ export function TeamPanel({ team }: TeamPanelProps) {
             <tr>
               <th className="p-2 text-left">Name</th>
               <th className="p-2 text-left">Total OT (Month)</th>
-              <th className="p-2 text-left">Avg Daily (Last 7d)</th>
+              <th className="p-2 text-left">
+                Last 7d Avg Daily ({last7WorkdaysRangeString})
+              </th>
             </tr>
           </thead>
           <tbody>
