@@ -8,31 +8,20 @@ export interface Team {
 
 export interface TeamOverview extends Team {
   summary?: TeamSummary
+  last7WorkdaysRange?: OvertimeRange
   members: OvertimeMemberEntry[]
 }
 
-export async function fetchTeams(userId: string): Promise<ApiResult<Team[]>> {
-  const params = new URLSearchParams({ userId })
+export async function fetchTeams(
+  managerId: string
+): Promise<ApiResult<Team[]>> {
+  const params = new URLSearchParams({ managerId })
   return await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
 }
 
 export async function fetchAllTeams(): Promise<ApiResult<Team[]>> {
   return await apiGet<Team[]>("/manager/teams")
 }
-
-// export async function fetchTeamOverviews(
-//   userId: string,
-//   teamId?: string
-// ): Promise<ApiResult<TeamOverview[]>> {
-//   const params = new URLSearchParams({ userId })
-//   if (teamId) params.append("teamId", teamId)
-//   const teams = await apiGet<Team[]>(`/manager/teams?${params.toString()}`)
-//   return teams.map((team) => ({
-//     ...team,
-//     summary: undefined, // Will be filled later
-//     members: [],
-//   }))
-// }
 
 export interface TeamMember {
   id: string
@@ -80,6 +69,7 @@ export interface OvertimeMemberEntry {
   lastName: string
   monthlyOvertime: number
   last7WorkdaysAvgHours: number
+  last7WorkdaysRange: OvertimeRange
 }
 
 export interface TeamEntry {
