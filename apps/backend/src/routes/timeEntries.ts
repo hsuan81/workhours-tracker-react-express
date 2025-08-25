@@ -5,7 +5,7 @@ import { type TimeEntryWithStatus } from "../services/timeEntriesService"
 import { allow } from "../auth/auth.js"
 import {
   fetchTimeEntriesByUser,
-  updateTimeEntries,
+  saveTimeEntries,
 } from "../services/timeEntriesService.js"
 import {
   ApiErrorCode,
@@ -27,7 +27,7 @@ router.post(
   "/",
   allow({ anyOf: ["EMPLOYEE", "MANAGER"] }),
   async (req: Request, res: Response) => {
-    console.log("Api: /timeEntries POST", req.body)
+    console.log("Api: /time-entries POST", req.body)
     if (!req.body || req.body.length == 0) {
       console.warn("No time entries provided")
       sendOk(res, { updated: [], created: [] })
@@ -37,12 +37,12 @@ router.post(
     const userId = req.session.user!.userId!
     const dataDate = new Date(entries[0].date)
 
-    const results = await updateTimeEntries(userId, dataDate, entries)
+    const results = await saveTimeEntries(userId, dataDate, entries)
 
     if (results.error) {
       sendFail(res, results.code!, results.error)
     }
-    console.log("Api: /timeEntries POST - finished", results)
+    console.log("Api: /time-entries POST - finished", results)
 
     sendOk(res, { updated: results.updated, created: results.created })
   }
@@ -53,7 +53,7 @@ router.get(
   "/summary",
   allow({ anyOf: ["EMPLOYEE", "MANAGER"] }),
   async (req: Request, res: Response) => {
-    console.log("Api: /timeEntries/summary GET", req.query)
+    console.log("Api: /time-entries/summary GET", req.query)
     try {
       const userId = req.session.user!.userId!
       const dateParam = req.query.date as string | undefined
@@ -83,7 +83,7 @@ router.get(
         select: { overtimeHours: true, overtimePay: true },
       })
 
-      console.log("Api: /timeEntries/summary GET - finished")
+      console.log("Api: /time-entries/summary GET - finished")
 
       sendOk(res, {
         date: toISODate(date),
@@ -104,7 +104,7 @@ router.get(
       })
     } catch (error) {
       const err = error as Error
-      console.error("Api: /timeEntries/summary GET - Error:", err)
+      console.error("Api: /time-entries/summary GET - Error:", err)
       sendUnexpected(res, err)
     }
   }
@@ -115,7 +115,7 @@ router.get(
   "/monthly-overview",
   allow({ anyOf: ["EMPLOYEE", "MANAGER"] }),
   async (req: Request, res: Response) => {
-    console.log("Api: /timeEntries/monthly-overview GET", req.query)
+    console.log("Api: /time-entries/monthly-overview GET", req.query)
 
     try {
       const userId = req.session.user!.userId!
@@ -177,7 +177,7 @@ router.get(
         },
       })
 
-      console.log("Api: /timeEntries/monthly-overview GET - finished")
+      console.log("Api: /time-entries/monthly-overview GET - finished")
       sendOk(res, {
         year,
         month,
@@ -189,7 +189,7 @@ router.get(
       })
     } catch (error) {
       const err = error as Error
-      console.error("Api: /timeEntries/monthly-overview GET - Error:", err)
+      console.error("Api: /time-entries/monthly-overview GET - Error:", err)
       sendUnexpected(res, err)
     }
   }
@@ -200,7 +200,7 @@ router.get(
   "/:userId",
   allow({ anyOf: ["EMPLOYEE", "MANAGER"] }),
   async (req: Request, res: Response) => {
-    console.log("Api: /timeEntries/:userId GET", req.params.userId, req.query)
+    console.log("Api: /time-entries/:userId GET", req.params.userId, req.query)
     try {
       const userId = req.params.userId
       const dateParam = req.query.date as string | undefined
@@ -208,11 +208,11 @@ router.get(
 
       console.log("-> fetching data for userId:", userId, "date:", date)
       const entries = (await fetchTimeEntriesByUser(userId, date)) ?? []
-      console.log("Api: /timeEntries/:userId GET - finished")
+      console.log("Api: /time-entries/:userId GET - finished")
       sendOk(res, entries)
     } catch (error) {
       const err = error as Error
-      console.error("Api: /timeEntries/:userId GET - Error:", err)
+      console.error("Api: /time-entries/:userId GET - Error:", err)
       sendUnexpected(res, err)
     }
   }

@@ -6,6 +6,8 @@ import { syncOvertimeSummary } from "../utils/overtime.js"
 
 const prisma = new PrismaClient()
 
+const userSaving = new Set<string>() // To prevent concurrent saves for the same user
+
 export async function fetchTimeEntriesByUser(
   userId: string,
   date: Date
@@ -34,11 +36,20 @@ interface UpdateTimeEntriesResult {
   error: string | null
 }
 
-export async function updateTimeEntries(
+export async function saveTimeEntries(
   userId: string,
   dataDate: Date,
   entries: TimeEntryWithStatus[]
 ): Promise<UpdateTimeEntriesResult> {
+  if (userSaving.has(userId)) {
+    return {
+      updated: [],
+      created: [],
+      deleted: [],
+      code: "CONFLICT",
+      error: "Another save operation is in progress for this user",
+    }
+  }
   if (entries.length === 0) {
     return {
       updated: [],

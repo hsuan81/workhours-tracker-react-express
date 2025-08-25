@@ -20,6 +20,7 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
   const [allProjects, setAllProjects] = useState<Project[]>([])
   const [user, setUser] = useState<UserResponse>()
   const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
 
   const [showModal, setShowModal] = useState(false)
   const [modalStatus, setModalStatus] = useState("loading")
@@ -141,13 +142,9 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
   }
 
   const handleSave = async () => {
+    if (isSaving) return // Prevent multiple submissions
+    setIsSaving(true)
     try {
-      const created = entries.filter((e) => e.status === "new")
-      const updated = entries.filter((e) => e.status === "edited")
-      const deleted = entries
-        .filter((e) => e.status === "deleted" && e.id)
-        .map((e) => ({ id: e.id }))
-      console.log({ created, updated, deleted })
       // Send to backend
       const entriesToSend = entries.filter((e) => e.status !== "unchanged")
       const response = await logTimeEntries(entriesToSend)
@@ -167,6 +164,7 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
       setModalMessage(`Something went wrong.\n Error:${error}`)
     } finally {
       setShowModal(true)
+      setIsSaving(false)
     }
   }
 
@@ -205,9 +203,9 @@ export default function LogHoursForm({ loggedUser }: { loggedUser: User }) {
         <button
           onClick={handleSave}
           className="bg-custom-blue text-custom-white px-3 py-1 rounded disabled:opacity-50"
-          disabled={hasInvalidEntry}
+          disabled={hasInvalidEntry || isSaving}
         >
-          Save Entry
+          {isSaving ? "Saving..." : "Save"}
         </button>
         <button
           onClick={handleCancel}
