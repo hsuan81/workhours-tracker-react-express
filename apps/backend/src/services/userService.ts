@@ -1,4 +1,5 @@
 // apps/backend/services/userService.ts
+import "dotenv/config"
 import { PrismaClient, UserRole } from "../generated/prisma/index.js"
 import { toISODate } from "../utils/calendarUtils.js"
 import {
@@ -6,7 +7,7 @@ import {
   generatePassword,
   comparePasswords,
 } from "../utils/passwordUtils"
-import { sendWelcomeEmail } from "../utils/emailUtils"
+import { sendWelcomeEmail } from "./emailService.js"
 
 interface RegisterUserInput {
   id: string
@@ -140,7 +141,8 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
   } = data
 
   const hourlyRate = monthlySalary / 30 / 8
-  const rawPassword = generatePassword()
+  const rawPassword =
+    process.env.ENV === "dev" ? "password12345" : generatePassword()
   const passwordHash = await hash(rawPassword)
 
   const result = await prisma.$transaction(async (tx) => {
@@ -165,7 +167,9 @@ export async function registerUser(data: RegisterUserInput): Promise<User> {
     return createdUser
   })
 
-  await sendWelcomeEmail(email, rawPassword)
+  if (process.env.ENV !== "dev") {
+    await sendWelcomeEmail(email, rawPassword)
+  }
 
   return {
     id: result.id,
