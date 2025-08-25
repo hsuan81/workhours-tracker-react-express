@@ -71,17 +71,12 @@ export default function App() {
   const [user, setUser] = useState<User | null>(null)
 
   const checkAuthStatus = async () => {
-    console.log("checkAuthStatus called")
     const res = await checkAuthenticated()
 
     if (res.ok && res.data) {
-      console.log("Set up auth status")
-      console.log("Setting isAuthenticated to:", res.data.authenticated)
       setIsAuthenticated(res.data.authenticated)
       setUser(res.data.user!)
     } else {
-      console.log("Setting isAuthenticated to false")
-      // console.log("check auth response:", res)
       setIsAuthenticated(false) // Not logged in
       setUser(null)
     }
@@ -90,17 +85,12 @@ export default function App() {
 
   // Check authentication when app loads
   useEffect(() => {
-    // Use your existing API call function
-    // fetch("/api/auth/check")
-    //   .then((response) => response.json())
-
     checkAuthStatus()
   }, []) // Run once when app loads}
 
   // Handle redirects after we know authentication status
   useEffect(() => {
     if (loading) return
-    // if (!loading) {
     // Only redirect after we've checked auth
     if (isAuthenticated) {
       // Logged in but on login page? Go to dashboard
@@ -197,7 +187,7 @@ export default function App() {
             path="/change-password"
             element={
               <ProtectedRoute user={user} isAuthenticated={isAuthenticated}>
-                <ChangePassword />
+                <ChangePassword user={user} />
               </ProtectedRoute>
             }
           />
@@ -207,57 +197,4 @@ export default function App() {
       </main>
     </>
   )
-  // return (
-  //   <NavigationProvider>
-  //     <Navbar />
-  //     <PageRenderer />
-  //   {/* // </NavigationProvider> */}
-  // )
 }
-// import { useState } from "react"
-// import LoginPage from "./pages/LoginPage"
-// import EmployeeDashboard from "./pages/EmployeeDashboard"
-// import LogHoursPage from "./pages/LogHoursPage"
-// import ManagerDashboard from "./pages/ManagerDashboard"
-// import AdminDashboard from "./pages/AdminDashboard"
-// import { logoutUser } from "./api/auth"
-
-// function App() {
-//   const [page, setPage] = useState("login")
-
-//   function redirect(pagePath: string): void {
-//     setPage(pagePath)
-//   }
-
-//   return (
-//     <div>
-//       <nav className="space-x-4 p-4 bg-custom-gray">
-//         <button onClick={() => setPage("dashboard")}>Dashboard</button>
-//         <button onClick={() => setPage("log")}>Log Hours</button>
-//         <button onClick={() => setPage("manager")}>Manager Dashboard</button>
-//         <button onClick={() => setPage("admin")}>
-//           Administrator Dashboard
-//         </button>
-//         <button
-//           className="bg-custom-red text-custom-white"
-//           onClick={async () => {
-//             const res = await logoutUser()
-//             if (res.success) {
-//               redirect("login")
-//             } else {
-//               return
-//             }
-//           }}
-//         >
-//           Logout
-//         </button>
-//       </nav>
-//       {page === "login" && <LoginPage redirect={redirect} />}
-//       {page === "dashboard" && <EmployeeDashboard />}
-//       {page === "log" && <LogHoursPage />}
-//       {page === "manager" && <ManagerDashboard />}
-//       {page === "admin" && <AdminDashboard />}
-//     </div>
-//   )
-// }
-// export default App

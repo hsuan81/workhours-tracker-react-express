@@ -35,7 +35,6 @@ export default function AdminDashboard(): JSX.Element {
     setShowModal(true)
 
     try {
-      console.log("Registering user:", data)
       await registerUser(data)
       setModalStatus("success")
       setModalMessage("User registered successfully!")
@@ -54,7 +53,6 @@ export default function AdminDashboard(): JSX.Element {
     setShowModal(true)
 
     try {
-      console.log("Updating user:", data)
       await updateUser(data.id, data as UpdateUserInput)
       setModalStatus("success")
       setModalMessage("User updated successfully!")

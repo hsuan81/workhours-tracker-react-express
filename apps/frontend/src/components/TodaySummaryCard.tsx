@@ -20,11 +20,9 @@ export function TodaySummaryCard({ user }: { user: User }) {
     const getTodaySummary = async () => {
       const result = await fetchTodaySummary(userId, todayString)
       if (result.ok) {
-        console.log("response ok", result)
         setSummary(result.data)
         // setSummary({ ...result.data, projects: result.data.projects ?? [] })
         setShowData(true)
-        console.log("regular", result.data)
       }
     }
     getTodaySummary()

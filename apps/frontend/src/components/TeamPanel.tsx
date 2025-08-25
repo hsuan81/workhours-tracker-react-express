@@ -18,7 +18,6 @@ export function TeamPanel({ team }: TeamPanelProps) {
   if (!team) {
     return <div className="text-center text-gray-500">No team selected</div>
   }
-  console.log("Rendering TeamPanel for team:", team)
   const last7WorkdaysRangeString =
     team.last7WorkdaysRange?.start + " ~ " + team.last7WorkdaysRange?.end
   const chartData = team.members.map((m) => ({

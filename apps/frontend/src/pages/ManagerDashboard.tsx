@@ -13,11 +13,11 @@ import type { User } from "../types/types"
 export default function ManagerDashboard({ user }: { user: User }) {
   const [teams, setTeams] = useState<TeamOverview[]>([])
   const [activeTeamId, setActiveTeamId] = useState("")
+  const [isLoading, setIsLoading] = useState(true)
   const userId = user.id
   const year = new Date().getFullYear()
   const month = new Date().getMonth()
   const monthString = `${year}-${String(month + 1).padStart(2, "0")}`
-  console.log("User ID:", userId)
 
   //   const baseUrl = import.meta.env.VITE_API_URL
 
@@ -35,11 +35,11 @@ export default function ManagerDashboard({ user }: { user: User }) {
       }
     }
     getTeams()
+    // setIsLoading(false)
   }, [])
 
-  // console.log("Teams state:", teams)
-
   useEffect(() => {
+    setIsLoading(true)
     const getTeamData = async () => {
       if (!activeTeamId) return
 
@@ -50,9 +50,6 @@ export default function ManagerDashboard({ user }: { user: User }) {
         fetchTeamSummaries(userId, monthString, activeTeamId),
         fetchTeamEntries(userId, monthString, activeTeamId),
       ])
-
-      console.log("Fetched summary:", summaryRes)
-      console.log("Fetched entries:", entriesRes)
 
       const teamsToUpdate = teams.map((team) => {
         if (team.id === activeTeamId) {
@@ -71,13 +68,13 @@ export default function ManagerDashboard({ user }: { user: User }) {
     }
 
     getTeamData()
+    setIsLoading(false)
   }, [activeTeamId])
 
-  const activeTeam = teams.find((t) => t.id === activeTeamId)!
-  console.log("Active team data:", activeTeam)
+  // const activeTeam = teams.find((t) => t.id === activeTeamId)!
 
   return (
-    <div className="bg-custom-gray p-6 space-y-6">
+    <div className="bg-custom-gray min-h-screen p-6 space-y-6">
       <h1 className="text-2xl font-bold">Manager Dashboard – July 2025</h1>
       <div className="flex space-x-4 border-b">
         {teams.map((team) => (
@@ -91,7 +88,11 @@ export default function ManagerDashboard({ user }: { user: User }) {
       </div>
 
       <div>
-        <TeamPanel team={teams.find((team) => team.id === activeTeamId)} />
+        {isLoading ? (
+          <div className="text-custom-black">Loading team data...</div>
+        ) : (
+          <TeamPanel team={teams.find((team) => team.id === activeTeamId)} />
+        )}
       </div>
     </div>
   )

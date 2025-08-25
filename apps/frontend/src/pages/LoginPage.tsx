@@ -139,39 +139,17 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
 
       // if (response.success) {
       setMessage("Login successful!")
-      //   // Handle successful login here (e.g., redirect, update app state, etc.)
-      //   console.log("Login successful:", response.message)
+      // Handle successful login here (e.g., redirect, update app state, etc.)
+      // Session is automatically handled via cookies (credentials: 'include')
+      // No need to manually store tokens - the session cookie is set by the server
 
-      //   // Session is automatically handled via cookies (credentials: 'include')
-      //   // No need to manually store tokens - the session cookie is set by the server
+      // Example: Redirect to dashboard after successful login
+      // window.location.href = "/dashboard"
+      // redirect("/dashboard")
 
-      //   // Example: Redirect to dashboard after successful login
-      //   // window.location.href = "/dashboard"
-      //   // redirect("dashboard")
-      // navigate("/dashboard")
-      // ONLY communicate success - don't navigate
-      // await onLoginSuccess() // Let parent handle what happens next
-
-      console.log("About to call onLoginSuccess")
-
-      // Make sure you're calling this and NOT navigate()
-      if (onLoginSuccess) {
-        onLoginSuccess()
-      } else {
-        console.log("onLoginSuccess is undefined!")
-      }
-
-      //   // Example: Update global authentication state
-      //   // setAuthenticatedUser(data.user);
-
-      //   // Example: Call a function to verify session was established
-      //   // const sessionValid = await checkSessionStatus();
-      //   // if (sessionValid) {
-      //   //   console.log('Session established successfully');
-      //   // }
-      // }
+      // call the provided callback to trigger post-login actions in parent (like redirect)
+      await onLoginSuccess()
     } catch (error) {
-      console.error("Login error:", error)
       if (error instanceof Error) {
         setMessage(error.message) // This will be the backend's error message
       } else {

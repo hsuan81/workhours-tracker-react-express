@@ -62,22 +62,12 @@ async function apiRequest<T>(
   }
 
   let body = null
-  try {
-    body = res.status !== 204 ? await res.json() : null
-    console.log("Request response: ", body)
-  } catch (e) {
-    console.error("JSON parse error", { path, status: res.status, e })
-  }
+  body = res.status !== 204 ? await res.json() : null
 
   if (res.ok) {
     return { ok: true, data: (body.data as T) ?? ({} as T) }
   }
 
-  // if (!res.ok) {
-  //   throw new Error(`API error: ${res.status} ${res.statusText}`)
-  // }
-
-  // return res.json()
   // Expected server error (your new uniform shape)
   if (body && body.success === false) {
     const error = {
@@ -90,7 +80,6 @@ async function apiRequest<T>(
   }
 
   // Unexpected shape — log everything for debugging
-  console.error("Unexpected API error", { path, status: res.status, body })
   throw new Error(`Unexpected API error (HTTP ${res.status})`)
 }
 
