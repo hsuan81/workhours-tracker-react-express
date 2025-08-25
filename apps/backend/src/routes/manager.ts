@@ -21,7 +21,7 @@ router.get(
   allow({ anyOf: ["MANAGER"] }),
   async (req: Request, res: Response) => {
     try {
-      // const managerId = req.user.id
+      console.log("Api: /manager/team-summary GET", req.query)
       const managerId = req.session.user!.userId!
       const { teamId, month } = req.query
       const result = await getTeamSummary({
@@ -30,8 +30,10 @@ router.get(
         month: month as string | undefined,
       })
       sendOk(res, result)
+      console.log("Api: /manager/team-summary GET - finished")
     } catch (error) {
       const err = error as Error
+      console.error("Api: /manager/team-summary GET - Error:", err)
       sendUnexpected(res, err)
     }
   }
@@ -47,7 +49,7 @@ router.get(
   allow({ anyOf: ["MANAGER"] }),
   async (req: Request, res: Response) => {
     try {
-      // const managerId = req.user.id
+      console.log("Api: /manager/team-entries GET", req.query)
       const managerId = req.session.user!.userId!
       const { teamId, month } = req.query
       const result = await getTeamEntries({
@@ -56,10 +58,11 @@ router.get(
         month: month as string | undefined,
       })
       sendOk(res, result)
+      console.log("Api: /manager/team-entries GET - finished")
     } catch (error) {
       const err = error as Error
+      console.error("Api: /manager/team-entries GET - Error:", err)
       sendUnexpected(res, err)
-      // next(err)
     }
   }
 )
@@ -74,14 +77,16 @@ router.get(
   allow({ anyOf: ["MANAGER", "ADMINISTRATOR"] }),
   async (req: Request, res: Response) => {
     try {
+      console.log("Api: /manager/teams GET")
       const managerId = req.query.managerId as string | undefined // Assuming managerId is passed as a query parameter
       console.log("Fetching teams for managerId:", managerId)
       const result = await getTeams(managerId)
       sendOk(res, result)
+      console.log("Api: /manager/teams GET - finished")
     } catch (error) {
       const err = error as Error
+      console.error("Api: /manager/teams GET - Error:", err)
       sendUnexpected(res, err)
-      // next(err)
     }
   }
 )
@@ -94,7 +99,7 @@ router.get(
   allow({ anyOf: ["MANAGER", "ADMINISTRATOR"] }),
   async (req: Request, res: Response) => {
     try {
-      // const managerId = req.user.id
+      console.log("Api: /manager/team-members GET", req.query)
       const managerId = req.query.managerId as string // Assuming managerId is passed as a query parameter
       const { teamId } = req.query
       const result = await getTeamMembers({
@@ -102,10 +107,11 @@ router.get(
         teamId: teamId as string | undefined,
       })
       sendOk(res, result)
+      console.log("Api: /manager/team-members GET - finished")
     } catch (error) {
       const err = error as Error
+      console.error("Api: /manager/team-members GET - Error:", err)
       sendUnexpected(res, err)
-      // next(err)
     }
   }
 )

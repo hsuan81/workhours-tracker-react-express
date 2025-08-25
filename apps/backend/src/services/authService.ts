@@ -11,6 +11,7 @@ export async function loginController(
   res: Response
 ): Promise<void> {
   try {
+    console.log("Api: /auth/login POST", req.body.email)
     const { email, password } = req.body
     if (!email || !password) {
       sendFail(res, "VALIDATION_FAILED", "Email and password required", {
@@ -19,21 +20,18 @@ export async function loginController(
           password: !password ? "required" : undefined,
         },
       })
-      // res.status(400).json({
-      //   success: false,
-      //   code: "VALIDATION_REQUIRED",
-      //   message: "Email and password required",
-      // })
+      console.error("Api: /auth/login POST Error: Email and password required")
       return
     }
 
-    // Mitigate timing attacks by always calling comparePasswords
+    // Mitigate timing attacks by always calling comparePasswords and using a dummy hash if user not found
     const user = await prisma.user.findUnique({ where: { email } })
     const dummyHash = "$2b$12$dummy.hash.to.prevent.timing.attacks.here"
     const hashToCheck = user?.passwordHash || dummyHash
     const isValidPassword = await comparePasswords(password, hashToCheck)
     if (!user || !isValidPassword || !user.isActive) {
       sendFail(res, "INVALID_CREDENTIALS", "Invalid credentials")
+      console.error("Api: /auth/login POST Error: Invalid credentials")
       return
     }
 
@@ -53,14 +51,15 @@ export async function loginController(
     // Express-session automatically saves when response ends
     // res.json({ success: true, message: "Login successful" })
     sendOk(res, undefined, "Login successful")
+    console.log("Api: /auth/login POST - finished")
     // What happens when response ends:
     // 1. Express-session calls: store.set(sessionId, sessionData, callback)
     // 2. Our store saves to database and calls: callback(null)
     // 3. Express-session receives success confirmation
     // 4. Response is sent to browser
   } catch (error) {
-    console.error("Login error:", error)
     const err = error as Error
+    console.error("Api: /auth/login POST Error:", err)
     sendUnexpected(res, err)
   }
 }
@@ -70,20 +69,24 @@ export async function logoutController(
   res: Response
 ): Promise<void> {
   try {
+    console.log("Api: /auth/logout POST")
     // What req.session.destroy() does:
     // 1. Express-session calls: store.destroy(sessionId, callback)
     // 2. Our store deletes from database and calls: callback(null)
     // 3. Express-session calls the callback WE provided: (err) => { ... }
     req.session.destroy((err) => {
       // if (err) return res.status(500).json({ message: "Logout failed" })
-      if (err) return sendFail(res, "INTERNAL_ERROR", "Logout failed")
+      if (err) {
+        console.error("Api: /auth/logout POST Error:", err)
+        return sendFail(res, "INTERNAL_ERROR", "Logout failed")
+      }
       res.clearCookie("sessionId")
-      // res.json({ success: true, message: "Logout successful" })
       sendOk(res, undefined, "Logout successful")
+      console.log("Api: /auth/logout POST - finished")
     })
   } catch (error) {
-    console.error("Logout error:", error)
     const err = error as Error
+    console.error("Api: /auth/logout POST Error:", err)
     sendUnexpected(res, err)
   }
 }
@@ -92,21 +95,16 @@ export async function sessionCheckController(
   req: Request,
   res: Response
 ): Promise<void> {
-  //   if (req.session.user) {
-  //   }
   try {
-    if (!req.session?.user) {
-      // res.status(401).json({
-      //   authenticated: false,
-      //   message: "No active session",
-      // })
+    console.log("Api: /auth/session GET")
+    if (!req.session.user || req.session.user === undefined) {
+      console.warn("Api: /auth/session Error: Invalid session, clearing cookie")
+      res.clearCookie("sessionId")
       sendFail(res, "SESSION_EXPIRED", "No active session")
+      return
     }
 
-    console.log("Session user before setting lastActivity:", req.session.user)
-
     req.session.user!.lastActivity = new Date().toISOString()
-    console.log("Session user:", req.session.user)
 
     sendOk(
       res,
@@ -122,16 +120,13 @@ export async function sessionCheckController(
       },
       "Authenticated"
     )
+    console.log("Api: /auth/session GET - finished")
   } catch (error) {
     // Log error but don't expose internals
-    console.error("Session check error:", error)
+    res.clearCookie("sessionId")
 
-    // res.status(500).json({
-    //   authenticated: false,
-    //   message: "Unable to verify session",
-    // })
     const err = error as Error
-
+    console.error("Api: /auth/session GET Error:", err)
     sendUnexpected(res, err)
   }
 }

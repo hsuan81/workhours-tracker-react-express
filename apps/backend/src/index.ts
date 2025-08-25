@@ -95,8 +95,3 @@ const PORT = process.env.BACKEND_PORT || 3001
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
-
-const prisma = new PrismaClient()
-// 測試 CRUD 例如：
-const users = await prisma.user.findMany()
-console.log("Connecting prisma", users)
