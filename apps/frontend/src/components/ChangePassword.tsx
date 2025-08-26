@@ -56,7 +56,7 @@ export function ChangePassword({ user }: { user: User | null }) {
     if (!formData.newPassword) {
       newErrors.newPassword = "New password is required"
     } else if (formData.newPassword.length < 8) {
-      newErrors.newPassword = "New password must be at least 6 characters"
+      newErrors.newPassword = "New password must be at least 8 characters"
     }
 
     if (!formData.confirmPassword) {
