@@ -29,6 +29,13 @@ export default function AdminDashboard(): JSX.Element {
   >()
   const [modalMessage, setModalMessage] = useState("")
 
+  // ⬇️ put near other functions
+  async function refreshUserList() {
+    // API call: fetch latest user names
+    const allUserNameRes = await fetchAllUserNames()
+    if (allUserNameRes.ok) setUserList(allUserNameRes.data)
+  }
+
   async function handleRegister(data: RegisterUserInput) {
     setModalStatus("loading")
     setModalMessage("Registering user...")
@@ -73,20 +80,6 @@ export default function AdminDashboard(): JSX.Element {
     setSelectedUserId(userId)
   }
 
-  // function closeModal() {
-  //   setShowModal(false)
-  // }
-
-  useEffect(() => {
-    const getSelectedUserData = async () => {
-      if (selectedUserId) {
-        const userRes = await fetchUserById(selectedUserId)
-        if (userRes.ok) setUserData(userRes.data)
-      }
-    }
-    getSelectedUserData()
-  }, [selectedUserId])
-
   useEffect(() => {
     const loadData = async () => {
       try {
@@ -102,6 +95,22 @@ export default function AdminDashboard(): JSX.Element {
     }
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === "update") {
+      refreshUserList()
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    const getSelectedUserData = async () => {
+      if (selectedUserId) {
+        const userRes = await fetchUserById(selectedUserId)
+        if (userRes.ok) setUserData(userRes.data)
+      }
+    }
+    getSelectedUserData()
+  }, [selectedUserId])
 
   return (
     <div className="bg-custom-gray min-h-screen py-8">
