@@ -26,6 +26,10 @@ function isWrite(method?: string) {
   return m === "POST" || m === "PUT" || m === "PATCH" || m === "DELETE"
 }
 
+function emitAuthExpired() {
+  window.dispatchEvent(new CustomEvent("auth:expired"))
+}
+
 async function apiRequest<T>(
   path: string,
   options: RequestInit = {},
@@ -59,6 +63,11 @@ async function apiRequest<T>(
       ...options,
       headers: { ...headers, "x-csrf-token": fresh },
     })
+  }
+
+  // Emit auth expired event for 401, 419, 440 status codes
+  if (res.status === 401 || res.status === 419 || res.status === 440) {
+    emitAuthExpired()
   }
 
   let body = null

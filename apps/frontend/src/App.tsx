@@ -109,6 +109,15 @@ export default function App() {
     }
   }, [isAuthenticated, loading, location.pathname, navigate])
 
+  // Listen for auth expiration events (e.g., from session expiry) to redirect to login after page is loaded
+  useEffect(() => {
+    function onExpired() {
+      navigate("/login", { replace: true })
+    }
+    window.addEventListener("auth:expired", onExpired)
+    return () => window.removeEventListener("auth:expired", onExpired)
+  }, [navigate])
+
   // Handle successful login
   const handleLoginSuccess = async () => {
     // Re-check auth status from backend
