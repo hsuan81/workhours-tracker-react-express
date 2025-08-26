@@ -23,7 +23,7 @@ export function TeamPanel({ team }: TeamPanelProps) {
   const chartData = team.members.map((m) => ({
     name: `${m.firstName} ${m.lastName}`,
     monthlyOvertime: m.monthlyOvertime,
-    last7WorkdaysAvgHours: m.last7WorkdaysAvgHours,
+    last7WorkdaysAvgHours: m.last7WorkdaysAvgHours.toFixed(2),
   }))
 
   return (
@@ -54,7 +54,9 @@ export function TeamPanel({ team }: TeamPanelProps) {
                   {member.firstName + " " + member.lastName}
                 </td>
                 <td className="p-2">{member.monthlyOvertime} hrs</td>
-                <td className="p-2">{member.last7WorkdaysAvgHours} hrs</td>
+                <td className="p-2">
+                  {member.last7WorkdaysAvgHours.toFixed(2)} hrs
+                </td>
               </tr>
             ))}
           </tbody>
