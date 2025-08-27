@@ -26,7 +26,7 @@ Built as an MVP with TypeScript, React, Express, Prisma, and PostgreSQL.
 
 ## 🎥 Demo Video
 
-- **Video**: https://github.com/user-attachments/assets/b9909a87-a902-44a7-ab4f-765216abef8c
+<video src="https://github.com/user-attachments/assets/b9909a87-a902-44a7-ab4f-765216abef8c"></video>
 
 ## 🚀 Quickstart(Local)
 
