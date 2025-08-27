@@ -33,7 +33,7 @@ app.use(
       dbRecordIdFunction: undefined,
     }), // Use Prisma session store
     name: "sessionId",
-    secret: "your-secret", // use env var in prod
+    secret: process.env.SESSION_SECRET!, // use env var in prod
     resave: false, // Only save if session modified
     rolling: true,
     saveUninitialized: false, // Don't save empty sessions
