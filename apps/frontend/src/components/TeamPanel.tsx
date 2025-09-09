@@ -1,4 +1,5 @@
 import type { TeamOverview } from "../api/manager"
+import { getMonthName } from "../utils/calendar"
 import {
   ComposedChart,
   CartesianGrid,
@@ -26,6 +27,10 @@ export function TeamPanel({ team }: TeamPanelProps) {
     last7WorkdaysAvgHours: m.last7WorkdaysAvgHours.toFixed(2),
   }))
 
+  const monthName = team.summary
+    ? getMonthName(Number(team.summary.month.split("-")[1]) - 1)
+    : "N/A"
+
   return (
     <div className="space-y-4">
       <div className="bg-custom-white border rounded-xl p-4">
@@ -41,7 +46,7 @@ export function TeamPanel({ team }: TeamPanelProps) {
           <thead className="bg-gray-100">
             <tr>
               <th className="p-2 text-left">Name</th>
-              <th className="p-2 text-left">Total OT (Month)</th>
+              <th className="p-2 text-left">Total OT ({monthName})</th>
               <th className="p-2 text-left">
                 Last 7d Avg Daily ({last7WorkdaysRangeString})
               </th>

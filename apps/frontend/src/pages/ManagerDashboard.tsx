@@ -9,6 +9,7 @@ import {
 import { TeamTab } from "../components/TeamTab"
 import { TeamPanel } from "../components/TeamPanel"
 import type { User } from "../types/types"
+import { getMonthName } from "../utils/calendar"
 
 export default function ManagerDashboard({ user }: { user: User }) {
   const [teams, setTeams] = useState<TeamOverview[]>([])
@@ -17,6 +18,7 @@ export default function ManagerDashboard({ user }: { user: User }) {
   const userId = user.id
   const year = new Date().getFullYear()
   const month = new Date().getMonth()
+  const monthName = getMonthName(month)
   const monthString = `${year}-${String(month + 1).padStart(2, "0")}`
 
   //   const baseUrl = import.meta.env.VITE_API_URL
@@ -75,7 +77,9 @@ export default function ManagerDashboard({ user }: { user: User }) {
 
   return (
     <div className="bg-custom-gray min-h-screen p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Manager Dashboard – July 2025</h1>
+      <h1 className="text-2xl font-bold">
+        Manager Dashboard – {monthName} {year}
+      </h1>
       <div className="flex space-x-4 border-b">
         {teams.map((team) => (
           <TeamTab
